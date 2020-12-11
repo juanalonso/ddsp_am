@@ -36,7 +36,7 @@ class AutoencoderInference(models.Autoencoder):
     return super().call(features, training=False)
 
 
-class StreamingF0Ld(models.Autoencoder):
+class StreamingF0Pw(models.Autoencoder):
   """Create an inference-only version of the model."""
 
   def __init__(self, ckpt, **kwargs):
@@ -62,11 +62,11 @@ class StreamingF0Ld(models.Autoencoder):
       (@processors.Add(),
         ['filtered_noise/signal', 'harmonic/signal']),
       ]"""
-      time_steps = gin.query_parameter('F0LoudnessPreprocessor.time_steps')
+      time_steps = gin.query_parameter('F0PowerPreprocessor.time_steps')
       n_samples = gin.query_parameter('Harmonic.n_samples')
       samples_per_frame = int(n_samples / time_steps)
       gin.parse_config([
-          'F0LoudnessPreprocessor.time_steps=1',
+          'F0PowerPreprocessor.time_steps=1',
           f'Harmonic.n_samples={samples_per_frame}',
           f'FilteredNoise.n_samples={samples_per_frame}',
           pg_string,
@@ -76,7 +76,7 @@ class StreamingF0Ld(models.Autoencoder):
     """Run a fake batch through the network."""
     inputs = {
         'f0_hz': tf.zeros([1]),
-        'loudness_db': tf.zeros([1]),
+        'power_db': tf.zeros([1]),
     }
     unused_outputs = self(inputs)
 
