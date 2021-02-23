@@ -18,6 +18,7 @@
 import time
 
 from absl import logging
+import ddsp
 from ddsp.training import train_util
 import gin
 import tensorflow.compat.v2 as tf
@@ -62,8 +63,7 @@ class Trainer(object):
         decay_rate=lr_decay_rate)
 
     with self.strategy.scope():
-      optimizer = tf.keras.optimizers.Adam(lr_schedule)
-      self.optimizer = optimizer
+      self.optimizer = tf.keras.optimizers.Adam(lr_schedule)
 
   def save(self, save_dir):
     """Saves model and optimizer to a checkpoint."""
@@ -163,3 +163,14 @@ class Trainer(object):
     return losses
 
 
+@gin.configurable
+def get_trainer_class(trainer_class=Trainer):
+  """Gin configurable function get a 'global' trainer for use in ddsp_run.py.
+
+  Args:
+    trainer_class: A trainer class such as `Trainer`.
+
+  Returns:
+    The 'global' trainer class specifieed in the gin config.
+  """
+  return trainer_class
