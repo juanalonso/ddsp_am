@@ -178,6 +178,23 @@ class Add(Processor):
 
 
 @gin.register
+class Mult(Processor):
+  """Multiplies two signals."""
+
+  def __init__(self, name: Text = 'mult'):
+    super().__init__(name=name)
+
+  def get_controls(self, signal_one: tf.Tensor,
+                   signal_two: tf.Tensor) -> TensorDict:
+    """Just pass signals through."""
+    return {'signal_one': signal_one, 'signal_two': signal_two}
+
+  def get_signal(self, signal_one: tf.Tensor,
+                 signal_two: tf.Tensor) -> tf.Tensor:
+    return tf.math.multiply(signal_one, signal_two)
+
+
+@gin.register
 class Mix(Processor):
   """Constant-power crossfade between two signals."""
 
