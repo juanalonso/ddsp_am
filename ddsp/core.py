@@ -843,6 +843,64 @@ def oscillator_bank(frequency_envelopes: tf.Tensor,
   return audio
 
 
+# TODO(jesseengel): Remove reliance on global injection for angular cumsum.
+@gin.configurable
+def modulate_amplitude(frequency_envelopes: tf.Tensor,
+                       amplitude_envelopes: tf.Tensor,
+                       sample_rate: int = 16000,
+                       sum_sinusoids: bool = True,
+                       use_angular_cumsum: bool = False) -> tf.Tensor:
+  """Generates audio from sample-wise frequencies for a bank of oscillators.
+
+  Args:
+    frequency_envelopes: Sample-wise oscillator frequencies (Hz). Shape
+      [batch_size, n_samples, n_sinusoids].
+    amplitude_envelopes: Sample-wise oscillator amplitude. Shape [batch_size,
+      n_samples, n_sinusoids].
+    sample_rate: Sample rate in samples per a second.
+    sum_sinusoids: Add up audio from all the sinusoids.
+    use_angular_cumsum: If synthesized examples are longer than ~100k audio
+      samples, consider use_angular_cumsum to avoid accumulating noticible phase
+      errors due to the limited precision of tf.cumsum. Unlike the rest of the
+      library, this property can be set with global dependency injection with
+      gin. Set the gin parameter `oscillator_bank.use_angular_cumsum=True`
+      to activate. Avoids accumulation of errors for generation, but don't use
+      usually for training because it is slower on accelerators.
+
+  Returns:
+    wav: Sample-wise audio. Shape [batch_size, n_samples, n_sinusoids] if
+      sum_sinusoids=False, else shape is [batch_size, n_samples].
+  """
+
+  print ("sample rate", sample_rate)
+
+  frequency_envelopes = tf_float32(frequency_envelopes)
+  amplitude_envelopes = tf_float32(amplitude_envelopes)
+
+  # Don't exceed Nyquist.
+  amplitude_envelopes = remove_above_nyquist(frequency_envelopes,
+                                             amplitude_envelopes,
+                                             sample_rate)
+
+  # Angular frequency, Hz -> radians per sample.
+  omegas = frequency_envelopes * (2.0 * np.pi)  # rad / sec
+  omegas = omegas / float(sample_rate)  # rad / sample
+
+  # Accumulate phase and synthesize.
+  if use_angular_cumsum:
+    # Avoids accumulation errors.
+    phases = angular_cumsum(omegas)
+  else:
+    phases = tf.cumsum(omegas, axis=1)
+
+  # Convert to waveforms.
+  wavs = tf.sin(phases)
+  audio = amplitude_envelopes * wavs  # [mb, n_samples, n_sinusoids]
+  if sum_sinusoids:
+    audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
+  return audio
+
+
 def get_harmonic_frequencies(frequencies: tf.Tensor,
                              n_harmonics: int) -> tf.Tensor:
   """Create integer multiples of the fundamental frequency.
