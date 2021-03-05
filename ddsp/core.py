@@ -882,33 +882,43 @@ def modulate_amplitude(mod_amps: tf.Tensor,
   mod_freqs = tf_float32(mod_freqs)
   f0_hz = tf_float32(f0_hz)
 
+  stacked_freqs = tf.stack((mod_freqs[0],f0_hz[0]), axis=0).shape
+
   # Don't exceed Nyquist.
   mod_amps = remove_above_nyquist(mod_freqs,
                                   mod_amps,
                                   sample_rate)
 
   # Angular frequency, Hz -> radians per sample.
-  omegas_freqs = mod_freqs * (2.0 * np.pi)  # rad / sec
-  omegas_freqs = omegas_freqs / float(sample_rate)  # rad / sample
+  # omegas_freqs = mod_freqs * (2.0 * np.pi)  # rad / sec
+  # omegas_freqs = omegas_freqs / float(sample_rate)  # rad / sample
 
-  omegas_f0 = f0_hz * (2.0 * np.pi)  # rad / sec
-  omegas_f0 = omegas_f0 / float(sample_rate)  # rad / sample
+  # omegas_f0 = f0_hz * (2.0 * np.pi)  # rad / sec
+  # omegas_f0 = omegas_f0 / float(sample_rate)  # rad / sample
+
+  omegas = stacked_freqs * (2.0 * np.pi)  # rad / sec
+  omegas = omegas / float(sample_rate)  # rad / sample
 
 
   # Accumulate phase and synthesize.
   if use_angular_cumsum:
     # Avoids accumulation errors.
-    phases_freqs = angular_cumsum(omegas_freqs)
-    phases_f0 = angular_cumsum(omegas_f0)
+    # phases_freqs = angular_cumsum(omegas_freqs)
+    # phases_f0 = angular_cumsum(omegas_f0)
+    phases = angular_cumsum(omegas)
   else:
-    phases_freqs = tf.cumsum(omegas_freqs, axis=1)
-    phases_f0 = tf.cumsum(omegas_f0, axis=1)
+    # phases_freqs = tf.cumsum(omegas_freqs, axis=1)
+    # phases_f0 = tf.cumsum(omegas_f0, axis=1)
+    phases = tf.cumsum(omegas, axis=1)
 
   # Convert to waveforms.
-  wavs_freqs = tf.sin(phases_freqs)
-  wavs_f0 = tf.sin(phases_f0)
+  # wavs_freqs = tf.sin(phases_freqs)
+  # wavs_f0 = tf.sin(phases_f0)
+  wavs = tf.sin(phases)
 
-  audio = mod_amps * wavs_f0 * wavs_freqs # [mb, n_samples, n_sinusoids]
+  # audio = mod_amps * wavs_f0 * wavs_freqs # [mb, n_samples, n_sinusoids]
+  audio = mod_amps * wavs[0] * wavs[1] # [mb, n_samples, n_sinusoids]
+
   if sum_sinusoids:
     audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
