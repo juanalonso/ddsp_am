@@ -395,7 +395,7 @@ class AmplitudeModulation(processors.Processor):
     mod_amp_envelopes = core.resample(mod_amps, self.n_samples,
                                         method=self.amp_resample_method)
     mod_freq_envelopes = core.resample(mod_freqs, self.n_samples)
-    f0_envelopes = core.resample(mod_freqs, self.n_samples)
+    f0_envelopes = core.resample(f0_hz, self.n_samples)
 
     # signal = core.modulate_amplitude(frequency_envelopes=frequency_envelopes,
     #                                  amplitude_envelopes=amplitude_envelopes,
