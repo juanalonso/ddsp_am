@@ -828,16 +828,18 @@ def oscillator_bank(frequency_envelopes: tf.Tensor,
 
 
 # TODO(jesseengel): Remove reliance on global injection for angular cumsum.
+# TODO(juanalonso): Rewrite 'Args:'' section
 @gin.configurable
-def modulate_amplitude(frequency_envelopes: tf.Tensor,
-                       amplitude_envelopes: tf.Tensor,
+def modulate_amplitude(mod_amps: tf.Tensor,
+                       mod_freqs: tf.Tensor,
+                       f0_hz: tf.Tensor,
                        sample_rate: int = 16000,
                        sum_sinusoids: bool = True,
                        use_angular_cumsum: bool = False) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
 
   Args:
-    frequency_envelopes: Sample-wise oscillator frequencies (Hz). Shape
+    mod_freqs: Sample-wise oscillator frequencies (Hz). Shape
       [batch_size, n_samples, n_sinusoids].
     amplitude_envelopes: Sample-wise oscillator amplitude. Shape [batch_size,
       n_samples, n_sinusoids].
@@ -856,18 +858,21 @@ def modulate_amplitude(frequency_envelopes: tf.Tensor,
       sum_sinusoids=False, else shape is [batch_size, n_samples].
   """
 
-  print ("sample rate", sample_rate)
+  print ("mod_freqs", mod_freqs.shape)
+  print ("mod_amps", mod_amps.shape)
+  print ("f0_hz", f0_hz.shape)
 
-  frequency_envelopes = tf_float32(frequency_envelopes)
-  amplitude_envelopes = tf_float32(amplitude_envelopes)
+  mod_freqs = tf_float32(mod_freqs)
+  mod_amps = tf_float32(mod_amps)
+  f0_hz = tf_float32(f0_hz)
 
   # Don't exceed Nyquist.
-  amplitude_envelopes = remove_above_nyquist(frequency_envelopes,
-                                             amplitude_envelopes,
+  mod_amps = remove_above_nyquist(mod_freqs,
+                                             mod_amps,
                                              sample_rate)
 
   # Angular frequency, Hz -> radians per sample.
-  omegas = frequency_envelopes * (2.0 * np.pi)  # rad / sec
+  omegas = mod_freqs * (2.0 * np.pi)  # rad / sec
   omegas = omegas / float(sample_rate)  # rad / sample
 
   # Accumulate phase and synthesize.
@@ -879,7 +884,7 @@ def modulate_amplitude(frequency_envelopes: tf.Tensor,
 
   # Convert to waveforms.
   wavs = tf.sin(phases)
-  audio = amplitude_envelopes * wavs  # [mb, n_samples, n_sinusoids]
+  audio = mod_amps * wavs  # [mb, n_samples, n_sinusoids]
   if sum_sinusoids:
     audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
   return audio

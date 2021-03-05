@@ -327,16 +327,16 @@ class AmplitudeModulation(processors.Processor):
     self.amp_resample_method = amp_resample_method
     self.freq_scale_fn = freq_scale_fn
 
-  def get_controls(self, 
-                   amplitudes, 
-                   frequencies,
+  def get_controls(self,
+                   mod_amps,
+                   mod_freqs,
                    f0_hz):
     """Convert network output tensors into a dictionary of synthesizer controls.
 
     Args:
-      amplitudes: 3-D Tensor of synthesizer controls, of shape
+      mod_amps: 3-D Tensor of synthesizer controls, of shape
         [batch, time, 1].
-      frequencies: 3-D Tensor of synthesizer controls, of shape
+      mod_freq: 3-D Tensor of synthesizer controls, of shape
         [batch, time, 1]. Expects strictly positive in Hertz.
       f0_hz: Fundamental frequencies in hertz. Shape [batch, time, 1].
 
@@ -345,28 +345,28 @@ class AmplitudeModulation(processors.Processor):
     """
     # Scale the inputs.
     if self.amp_scale_fn is not None:
-      amplitudes = self.amp_scale_fn(amplitudes)
+      mod_amps = self.amp_scale_fn(mod_amps)
 
     if self.freq_scale_fn is not None:
-      frequencies = self.freq_scale_fn(frequencies)
-      amplitudes = core.remove_above_nyquist(frequencies,
-                                             amplitudes,
+      mod_freqs = self.freq_scale_fn(mod_freqs)
+      mod_amps = core.remove_above_nyquist(mod_freqs,
+                                             mod_amps,
                                              self.sample_rate)
 
-    return {'amplitudes': amplitudes,
-            'frequencies': frequencies,
+    return {'mod_amps': mod_amps,
+            'mod_freqs': mod_freqs,
             'f0_hz': f0_hz}
 
   def get_signal(self, 
-                 amplitudes, 
-                 frequencies, 
+                 mod_amps, 
+                 mod_freqs, 
                  f0_hz):
     """Synthesize audio with sinusoidal synthesizer from controls.
 
     Args:
-      amplitudes: Amplitude tensor of shape [batch, n_frames, n_sinusoids].
+      mod_amps: Amplitude tensor of shape [batch, n_frames, 1].
         Expects float32 that is strictly positive.
-      frequencies: Tensor of shape [batch, n_frames, 1].
+      mod_freqs: Tensor of shape [batch, n_frames, 1].
         Expects float32 in Hertz that is strictly positive.
       f0_hz: The fundamental frequency in Hertz. Tensor of shape [batch,
         n_frames, 1].
@@ -375,13 +375,16 @@ class AmplitudeModulation(processors.Processor):
       signal: A tensor of harmonic waves of shape [batch, n_samples].
     """
     # Create sample-wise envelopes.
-    amplitude_envelopes = core.resample(amplitudes, self.n_samples,
+    mod_amp_envelopes = core.resample(mod_amps, self.n_samples,
                                         method=self.amp_resample_method)
-    frequency_envelopes = core.resample(frequencies, self.n_samples)
+    mod_freq_envelopes = core.resample(mod_freqs, self.n_samples)
+    f0_envelopes = core.resample(mod_freqs, self.n_samples)
 
-    signal = core.modulate_amplitude(frequency_envelopes=frequency_envelopes,
-                                     amplitude_envelopes=amplitude_envelopes,
+    # signal = core.modulate_amplitude(frequency_envelopes=frequency_envelopes,
+    #                                  amplitude_envelopes=amplitude_envelopes,
+    #                                  sample_rate=self.sample_rate)
+    signal = core.modulate_amplitude(mod_amps=mod_amp_envelopes,
+                                     mod_freqs=mod_freq_envelopes,
+                                     f0_hz=f0_envelopes,
                                      sample_rate=self.sample_rate)
     return signal
-
-
