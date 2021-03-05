@@ -858,35 +858,44 @@ def modulate_amplitude(mod_amps: tf.Tensor,
       sum_sinusoids=False, else shape is [batch_size, n_samples].
   """
 
-  print ("mod_freqs", mod_freqs.shape)
-  print ("mod_amps", mod_amps.shape)
-  print ("f0_hz", f0_hz.shape)
+  # print ("mod_amps", mod_amps.shape)
+  # print ("mod_freqs", mod_freqs.shape)
+  # print ("f0_hz", f0_hz.shape)
 
-  mod_freqs = tf_float32(mod_freqs)
   mod_amps = tf_float32(mod_amps)
+  mod_freqs = tf_float32(mod_freqs)
   f0_hz = tf_float32(f0_hz)
 
   # Don't exceed Nyquist.
   mod_amps = remove_above_nyquist(mod_freqs,
-                                             mod_amps,
-                                             sample_rate)
+                                  mod_amps,
+                                  sample_rate)
 
   # Angular frequency, Hz -> radians per sample.
-  omegas = mod_freqs * (2.0 * np.pi)  # rad / sec
-  omegas = omegas / float(sample_rate)  # rad / sample
+  omegas_freqs = mod_freqs * (2.0 * np.pi)  # rad / sec
+  omegas_freqs = omegas_freqs / float(sample_rate)  # rad / sample
+
+  omegas_f0 = f0_hz * (2.0 * np.pi)  # rad / sec
+  omegas_f0 = omegas_f0 / float(sample_rate)  # rad / sample
+
 
   # Accumulate phase and synthesize.
   if use_angular_cumsum:
     # Avoids accumulation errors.
-    phases = angular_cumsum(omegas)
+    phases_freqs = angular_cumsum(omegas_freqs)
+    phases_f0 = angular_cumsum(omegas_f0)
   else:
-    phases = tf.cumsum(omegas, axis=1)
+    phases_freqs = tf.cumsum(omegas_freqs, axis=1)
+    phases_f0 = tf.cumsum(omegas_f0, axis=1)
 
   # Convert to waveforms.
-  wavs = tf.sin(phases)
-  audio = mod_amps * wavs  # [mb, n_samples, n_sinusoids]
+  wavs_freqs = tf.sin(phases_freqs)
+  wavs_f0 = tf.sin(phases_f0)
+
+  audio = mod_amps * wavs_f0 * wavs_freqs # [mb, n_samples, n_sinusoids]
   if sum_sinusoids:
     audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
+
   return audio
 
 
