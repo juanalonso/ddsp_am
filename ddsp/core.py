@@ -835,7 +835,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
                        f0_hz: tf.Tensor,
                        sample_rate: int = 16000,
                        sum_sinusoids: bool = True,
-                       use_angular_cumsum: bool = False) -> tf.Tensor:
+                       use_angular_cumsum: bool = True) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
 
   Args:
@@ -866,7 +866,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
   mod_freqs = tf_float32(mod_freqs)
   f0_hz = tf_float32(f0_hz)
 
-  stacked = True
+  stacked = False
 
   if stacked:
     stacked_freqs = tf.stack((mod_freqs[0],f0_hz[0]), axis=0)
@@ -880,7 +880,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
     else:
       phases = tf.cumsum(omegas, axis=1)
     wavs = tf.sin(phases)
-    audio = mod_amps * wavs[0] * wavs[1] # [mb, n_samples, n_sinusoids]
+    audio = (1 + mod_amps * wavs[0]) * wavs[1] # [mb, n_samples, n_sinusoids]
   else:
     mod_amps = remove_above_nyquist(mod_freqs,
                                     mod_amps,
@@ -897,7 +897,8 @@ def modulate_amplitude(mod_amps: tf.Tensor,
       phases_f0 = tf.cumsum(omegas_f0, axis=1)
     wavs_freqs = tf.sin(phases_freqs)
     wavs_f0 = tf.sin(phases_f0)
-    audio = mod_amps * wavs_f0 * wavs_freqs # [mb, n_samples, n_sinusoids]
+    audio = wavs_f0 * (1.0 + mod_amps * wavs_freqs) # [mb, n_samples, n_sinusoids]
+    # audio = wavs_f0 * (1.0) # [mb, n_samples, n_sinusoids]
 
   if sum_sinusoids:
     audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
