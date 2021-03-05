@@ -318,14 +318,14 @@ class AmplitudeModulation(processors.Processor):
                sample_rate=16000,
                amp_scale_fn=core.exp_sigmoid,
                amp_resample_method='window',
-               freq_scale_fn=core.frequencies_sigmoid,
+               # freq_scale_fn=core.frequencies_sigmoid,
                name='ampmod'):
     super().__init__(name=name)
     self.n_samples = n_samples
     self.sample_rate = sample_rate
     self.amp_scale_fn = amp_scale_fn
     self.amp_resample_method = amp_resample_method
-    self.freq_scale_fn = freq_scale_fn
+    # self.freq_scale_fn = freq_scale_fn
 
   def get_controls(self,
                    mod_amps,
@@ -347,11 +347,11 @@ class AmplitudeModulation(processors.Processor):
     if self.amp_scale_fn is not None:
       mod_amps = self.amp_scale_fn(mod_amps)
 
-    if self.freq_scale_fn is not None:
-      mod_freqs = self.freq_scale_fn(mod_freqs)
-      mod_amps = core.remove_above_nyquist(mod_freqs,
-                                             mod_amps,
-                                             self.sample_rate)
+    # if self.freq_scale_fn is not None:
+    #   mod_freqs = self.freq_scale_fn(mod_freqs)
+    #   mod_amps = core.remove_above_nyquist(mod_freqs,
+    #                                          mod_amps,
+    #                                          self.sample_rate)
 
     return {'mod_amps': mod_amps,
             'mod_freqs': mod_freqs,
