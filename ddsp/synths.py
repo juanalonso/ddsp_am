@@ -309,3 +309,86 @@ class Sinusoidal(processors.Processor):
     return signal
 
 
+@gin.register
+class AmplitudeModulation(processors.Processor):
+  """Synthesize audio with amplitude modulation."""
+
+  def __init__(self,
+               n_samples=64000,
+               sample_rate=16000,
+               amp_scale_fn=core.exp_sigmoid,
+               amp_resample_method='window',
+               name='ampmod'):
+    super().__init__(name=name)
+    self.n_samples = n_samples
+    self.sample_rate = sample_rate
+    self.amp_scale_fn = amp_scale_fn
+    self.amp_resample_method = amp_resample_method
+    # self.freq_scale_fn = freq_scale_fn
+
+  def get_controls(self,
+                   amplitudes,
+                   mod_amps,
+                   mod_freqs,
+                   f0_hz):
+    """Convert network output tensors into a dictionary of synthesizer controls.
+
+    Args:
+      amplitudes: 3-D Tensor of synthesizer controls, of shape
+        [batch, time, 1].
+      mod_amps: 3-D Tensor of synthesizer controls, of shape
+        [batch, time, 1].
+      mod_freq: 3-D Tensor of synthesizer controls, of shape
+        [batch, time, 1]. Expects strictly positive in Hertz.
+      f0_hz: Fundamental frequencies in hertz. Shape [batch, time, 1].
+
+    Returns:
+      controls: Dictionary of tensors of synthesizer controls.
+    """
+    # Scale the inputs.
+    if self.amp_scale_fn is not None:
+      amplitudes = self.amp_scale_fn(amplitudes)
+      # TODO(juanalonso): Do we need to rescale mod_amps?
+      mod_amps = self.amp_scale_fn(mod_amps)
+
+    # if self.freq_scale_fn is not None:
+    #   mod_freqs = self.freq_scale_fn(mod_freqs)
+    #   mod_amps = core.remove_above_nyquist(mod_freqs,
+    #                                          mod_amps,
+    #                                          self.sample_rate)
+
+    return {'amplitudes': amplitudes,
+            'mod_amps': mod_amps,
+            'mod_freqs': mod_freqs,
+            'f0_hz': f0_hz}
+
+  def get_signal(self,  amplitudes, mod_amps, mod_freqs, f0_hz):
+    """Synthesize audio with am synthesizer from controls.
+
+    Args:
+      amplitudes: Amplitude tensor of shape [batch, n_frames, 1]. Expects
+        float32 that is strictly positive.
+      mod_amps: Amplitude tensor of shape [batch, n_frames, 1].
+        Expects float32 that is strictly positive.
+      mod_freqs: Tensor of shape [batch, n_frames, 1].
+        Expects float32 in Hertz that is strictly positive.
+      f0_hz: The fundamental frequency in Hertz. Tensor of shape [batch,
+        n_frames, 1].
+
+    Returns:
+      signal: A tensor of shape [batch, n_samples].
+    """
+    # Create sample-wise envelopes.
+    amplitudes_envelopes = core.resample(amplitudes, self.n_samples,
+                                        method=self.amp_resample_method)
+    mod_amp_envelopes = core.resample(mod_amps, self.n_samples,
+                                        method=self.amp_resample_method)
+    mod_freq_envelopes = core.resample(mod_freqs, self.n_samples)
+    f0_envelopes = core.resample(f0_hz, self.n_samples)
+
+    signal = core.modulate_amplitude(amplitudes=amplitudes_envelopes,
+                                     mod_amps=mod_amp_envelopes,
+                                     mod_freqs=mod_freq_envelopes,
+                                     f0_hz=f0_envelopes,
+                                     sample_rate=self.sample_rate)
+    return signal
