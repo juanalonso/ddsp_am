@@ -830,7 +830,8 @@ def oscillator_bank(frequency_envelopes: tf.Tensor,
 # TODO(jesseengel): Remove reliance on global injection for angular cumsum.
 # TODO(juanalonso): Rewrite 'Args:'' section
 @gin.configurable
-def modulate_amplitude(mod_amps: tf.Tensor,
+def modulate_amplitude(amplitudes: tf.Tensor,
+                       mod_amps: tf.Tensor,
                        mod_freqs: tf.Tensor,
                        f0_hz: tf.Tensor,
                        sample_rate: int = 16000,
@@ -862,6 +863,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
   # print ("mod_freqs", mod_freqs.shape)
   # print ("f0_hz", f0_hz.shape)
 
+  amplitudes = tf_float32(amplitudes)
   mod_amps = tf_float32(mod_amps)
   mod_freqs = tf_float32(mod_freqs)
   f0_hz = tf_float32(f0_hz)
@@ -880,7 +882,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
     else:
       phases = tf.cumsum(omegas, axis=1)
     wavs = tf.sin(phases)
-    audio = (1 + mod_amps * wavs[0]) * wavs[1] # [mb, n_samples, n_sinusoids]
+    audio = amplitudes * (1 + mod_amps * wavs[0]) * wavs[1] # [mb, n_samples, n_sinusoids]
   else:
     mod_amps = remove_above_nyquist(mod_freqs,
                                     mod_amps,
@@ -897,7 +899,7 @@ def modulate_amplitude(mod_amps: tf.Tensor,
       phases_f0 = tf.cumsum(omegas_f0, axis=1)
     wavs_freqs = tf.sin(phases_freqs)
     wavs_f0 = tf.sin(phases_f0)
-    audio = wavs_f0 * (1.0 + mod_amps * wavs_freqs) # [mb, n_samples, n_sinusoids]
+    audio = amplitudes * wavs_f0 * (1.0 + mod_amps * wavs_freqs) # [mb, n_samples, n_sinusoids]
     # audio = wavs_f0 * (1.0) # [mb, n_samples, n_sinusoids]
 
   if sum_sinusoids:
