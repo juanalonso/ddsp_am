@@ -908,6 +908,84 @@ def modulate_amplitude(amplitudes: tf.Tensor,
   return audio
 
 
+# TODO(jesseengel): Remove reliance on global injection for angular cumsum.
+# TODO(juanalonso): Rewrite 'Args:'' section
+@gin.configurable
+def modulate_frequency(amplitudes: tf.Tensor,
+                       mod_amps: tf.Tensor,
+                       mod_freqs: tf.Tensor,
+                       f0_hz: tf.Tensor,
+                       sample_rate: int = 16000,
+                       use_angular_cumsum: bool = True) -> tf.Tensor:
+  """Generates audio from sample-wise frequencies for a bank of oscillators.
+
+  Args:
+    mod_freqs: Sample-wise oscillator frequencies (Hz). Shape
+      [batch_size, n_samples, n_sinusoids].
+    amplitude_envelopes: Sample-wise oscillator amplitude. Shape [batch_size,
+      n_samples, n_sinusoids].
+    sample_rate: Sample rate in samples per a second.
+    sum_sinusoids: Add up audio from all the sinusoids.
+    use_angular_cumsum: If synthesized examples are longer than ~100k audio
+      samples, consider use_angular_cumsum to avoid accumulating noticible phase
+      errors due to the limited precision of tf.cumsum. Unlike the rest of the
+      library, this property can be set with global dependency injection with
+      gin. Set the gin parameter `oscillator_bank.use_angular_cumsum=True`
+      to activate. Avoids accumulation of errors for generation, but don't use
+      usually for training because it is slower on accelerators.
+
+  Returns:
+    wav: Sample-wise audio. Shape [batch_size, n_samples, n_sinusoids] if
+      sum_sinusoids=False, else shape is [batch_size, n_samples].
+  """
+
+  # print ("mod_amps", mod_amps.shape)
+  # print ("mod_freqs", mod_freqs.shape)
+  # print ("f0_hz", f0_hz.shape)
+
+  amplitudes = tf_float32(amplitudes)
+  mod_amps = tf_float32(mod_amps)
+  mod_freqs = tf_float32(mod_freqs)
+  f0_hz = tf_float32(f0_hz)
+
+  mod_amps = remove_above_nyquist(mod_freqs,
+                                  mod_amps,
+                                  sample_rate)
+
+  omegas_freqs = mod_freqs * (2.0 * np.pi)  # rad / sec
+  omegas_freqs = omegas_freqs / float(sample_rate)  # rad / sample
+
+  if use_angular_cumsum:
+    phases_freqs = angular_cumsum(omegas_freqs)
+  else:
+    phases_freqs = tf.cumsum(omegas_freqs, axis=1)
+
+  wavs_freqs = tf.sin(phases_freqs) 
+  wavs_freqs = wavs_freqs * mod_amps 
+  # audio = tf.reduce_sum(wavs_freqs, axis=-1)  # [mb, n_samples]
+
+  # print(wavs_freqs[0,:100,0])
+  # print("min", tf.reduce_min(audio[0,:], axis=0).numpy())
+  # print("max", tf.reduce_max(audio[0,:], axis=0).numpy())
+
+  omegas_f0 = f0_hz * (2.0 * np.pi)  # rad / sec
+  omegas_f0 = omegas_f0 / float(sample_rate)  # rad / sample
+  # omegas_f0 = omegas_f0 + wavs_freqs
+
+  if use_angular_cumsum:
+    phases_f0 = angular_cumsum(omegas_f0)
+  else:
+    phases_f0 = tf.cumsum(omegas_f0, axis=1)
+
+  wavs_f0 = tf.sin(phases_f0 + wavs_freqs)
+  audio = amplitudes * wavs_f0  # [mb, n_samples, 1]
+  audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
+
+  return audio
+
+
+
+
 def get_harmonic_frequencies(frequencies: tf.Tensor,
                              n_harmonics: int) -> tf.Tensor:
   """Create integer multiples of the fundamental frequency.
