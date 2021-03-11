@@ -235,6 +235,31 @@ class TFRecordProvider(RecordProvider):
                      frame_rate, tf.data.TFRecordDataset)
 
 
+@gin.register
+class FMRecordProvider(TFRecordProvider):
+  """Class for reading TFRecords and returning a dataset."""
+
+  def __init__(self,
+               file_pattern=None,
+               example_secs=4,
+               sample_rate=16000,
+               frame_rate=250):
+    """TFRecordProvider constructor."""
+    self._f0_length = 1
+    super().__init__(file_pattern, example_secs, sample_rate,
+                     frame_rate)
+
+  @property
+  def features_dict(self):
+    """Dictionary of features to read from dataset."""
+    return {
+        'audio':
+            tf.io.FixedLenFeature([self._audio_length], dtype=tf.float32),
+        'f0_hz':
+            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+        'loudness_db':
+            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+    }
 # ------------------------------------------------------------------------------
 # Zipped DataProvider
 # ------------------------------------------------------------------------------

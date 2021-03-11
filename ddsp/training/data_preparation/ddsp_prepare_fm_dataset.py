@@ -26,7 +26,7 @@ ddsp_prepare_fm_dataset \
 
 from absl import app
 from absl import flags
-from ddsp.training.data_preparation.prepare_tfrecord_lib import prepare_tfrecord
+from ddsp.training.data_preparation.prepare_fm_dataset_lib import prepare_fm_dataset
 import tensorflow.compat.v2 as tf
 
 FLAGS = flags.FLAGS
@@ -69,7 +69,7 @@ def run():
   for filepattern in FLAGS.input_audio_filepatterns:
     input_audio_paths.extend(tf.io.gfile.glob(filepattern))
 
-  prepare_tfrecord(
+  prepare_fm_dataset(
       input_audio_paths,
       FLAGS.output_tfrecord_path,
       num_shards=FLAGS.num_shards,
