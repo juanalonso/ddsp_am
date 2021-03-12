@@ -18,10 +18,10 @@
 from absl import logging
 import apache_beam as beam
 from ddsp import spectral_ops
+from ddsp import core
 import numpy as np
 import pydub
 import tensorflow.compat.v2 as tf
-
 
 def _load_audio_as_array(audio_path: str,
                          sample_rate: int) -> np.array:
@@ -72,12 +72,12 @@ def add_loudness(ex, sample_rate, frame_rate, n_fft=2048):
   return ex
 
 
-def _add_f0(ex, sample_rate, frame_rate, window_secs):
-  """Add fundamental frequency (f0) estimate using CREPE."""
-  beam.metrics.Metrics.counter('prepare-tfrecord', 'estimate-f0').inc()
-  audio = ex['audio']
+def _add_f0(ex):
+  """Add fundamental frequency (f0) estimate."""
+  beam.metrics.Metrics.counter('prepare-tfrecord', 'compute-f0').inc()
 
-  f0_hz = 440*np.ones(int(frame_rate*len(audio)//sample_rate//window_secs))
+  # TODO: hardcoded, but at some point should be read from a file
+  f0_hz = core.midi_to_hz([48,52,55,60,64,67,72,76,79,84,88,91]).numpy()
   ex = dict(ex)
   ex.update({
       'f0_hz': f0_hz.astype(np.float32)
@@ -99,10 +99,14 @@ def split_example(
     for window_end in range(window_size, len(sequence) + 1, hop_size):
       yield sequence[window_end-window_size:window_end]
 
+  def get_f0(sequence):
+    for window_end in range(len(sequence)):
+      yield [sequence[window_end]]
+
   for audio, loudness_db, f0_hz in zip(
       get_windows(ex['audio'], sample_rate),
       get_windows(ex['loudness_db'], frame_rate),
-      get_windows(ex['f0_hz'], frame_rate)):
+      get_f0(ex['f0_hz'])):
     beam.metrics.Metrics.counter('prepare-tfrecord', 'split-example').inc()
     yield {
         'audio': audio,
@@ -162,7 +166,7 @@ def prepare_fm_dataset(
     if frame_rate:
       examples = (
           examples
-          | beam.Map(_add_f0, sample_rate, frame_rate, window_secs)
+          | beam.Map(_add_f0)
           | beam.Map(add_loudness, sample_rate, frame_rate))
 
     if window_secs:
