@@ -257,7 +257,7 @@ class FMRecordProvider(TFRecordProvider):
         'audio':
             tf.io.FixedLenFeature([self._audio_length], dtype=tf.float32),
         'f0_hz':
-            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+            tf.io.FixedLenFeature([self._f0_length], dtype=tf.float32),
         'loudness_db':
             tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
     }
