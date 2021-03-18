@@ -412,7 +412,9 @@ class FrequencyModulation(processors.Processor):
   def get_controls(self, f0,
                    a1, i1,
                    a2, i2,
-                   m21
+                   a3, i3,
+                   m21,
+                   m31, m32
                    ):
 
     """Convert network output tensors into a dictionary of synthesizer controls.
@@ -441,13 +443,17 @@ class FrequencyModulation(processors.Processor):
     return {'f0': f0,
             'a1': a1, 'i1': i1,
             'a2': a2, 'i2': i2,
+            'a3': a3, 'i3': i3,
             'm21' : m21,
+            'm31' : m31, 'm32' : m32,
            }
 
   def get_signal(self, f0,
                  a1, i1,
                  a2, i2,
+                 a3, i3,
                  m21,
+                 m31, m32,
                  ):
     """Synthesize audio with am synthesizer from controls.
 
@@ -470,14 +476,21 @@ class FrequencyModulation(processors.Processor):
     i1_env = core.resample(i1, self.n_samples)
     a2_env = core.resample(a2, self.n_samples)
     i2_env = core.resample(i2, self.n_samples)
+    a3_env = core.resample(a3, self.n_samples)
+    i3_env = core.resample(i3, self.n_samples)
     m21_env = core.resample(m21, self.n_samples)
+    m31_env = core.resample(m31, self.n_samples)
+    m32_env = core.resample(m32, self.n_samples)
 
     signal = core.modulate_frequency(f0=f0_env,
                                      a1=a1_env,
                                      i1=i1_env,
                                      a2=a2_env,
                                      i2=i2_env,
+                                     a3=a3_env,
+                                     i3=i3_env,
                                      m21=m21_env,
+                                     m31=m31_env, m32=m32_env,
                                      sample_rate=self.sample_rate)
     return signal
     

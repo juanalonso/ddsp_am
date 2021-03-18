@@ -911,7 +911,11 @@ def modulate_frequency(f0: tf.Tensor,
                        i1: tf.Tensor,
                        a2: tf.Tensor,
                        i2: tf.Tensor,
+                       a3: tf.Tensor,
+                       i3: tf.Tensor,
                        m21: tf.Tensor,
+                       m31: tf.Tensor,
+                       m32: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
@@ -945,26 +949,34 @@ def modulate_frequency(f0: tf.Tensor,
   i1 = tf_float32(i1)
   a2 = tf_float32(a2)
   i2 = tf_float32(i2)
+  a3 = tf_float32(a3)
+  i3 = tf_float32(i3)
   m21 = tf_float32(m21)
+  m31 = tf_float32(m31)
+  m32 = tf_float32(m32)
 
   # mod_amp = remove_above_nyquist(mod_freq,
   #                                 mod_amp,
   #                                 sample_rate)
 
+  omega3 = f0 * i3 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega2 = f0 * i2 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega1 = f0 * i1 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
 
   if use_angular_cumsum:
+    phase3 = angular_cumsum(omega3)
     phase2 = angular_cumsum(omega2)
     phase1 = angular_cumsum(omega1)
   else:
+    phase3 = tf.cumsum(omega3, axis=1)
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x2 = tf.sin(phase2)
-  x1 = tf.sin(phase1 + m21 * x2)
+  x3 = tf.sin(phase3)
+  x2 = tf.sin(phase2 + m32 * x3)
+  x1 = tf.sin(phase1 + m31 * x3 + m21 * x2)
 
-  audio = a2 * x2 + a1 * x1  # [mb, n_samples, 1]
+  audio = a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
