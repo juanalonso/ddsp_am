@@ -906,10 +906,12 @@ def modulate_amplitude(carr_amp: tf.Tensor,
 # TODO(jesseengel): Remove reliance on global injection for angular cumsum.
 # TODO(juanalonso): Rewrite 'Args:'' section
 @gin.configurable
-def modulate_frequency(carr_amp: tf.Tensor,
-                       carr_freq: tf.Tensor,
-                       mod_amp: tf.Tensor,
-                       mod_freq: tf.Tensor,
+def modulate_frequency(f0: tf.Tensor,
+                       a1: tf.Tensor,
+                       i1: tf.Tensor,
+                       a2: tf.Tensor,
+                       i2: tf.Tensor,
+                       m21: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
@@ -938,42 +940,31 @@ def modulate_frequency(carr_amp: tf.Tensor,
   # print ("mod_freq", mod_freq.shape)
   # print ("f0_hz", f0_hz.shape)
 
-  carr_amp = tf_float32(carr_amp)
-  carr_freq = tf_float32(carr_freq)
-  mod_amp = tf_float32(mod_amp)
-  mod_freq = tf_float32(mod_freq)
+  f0 = tf_float32(f0)
+  a1 = tf_float32(a1)
+  i1 = tf_float32(i1)
+  a2 = tf_float32(a2)
+  i2 = tf_float32(i2)
+  m21 = tf_float32(m21)
 
-  mod_amp = remove_above_nyquist(mod_freq,
-                                  mod_amp,
-                                  sample_rate)
+  # mod_amp = remove_above_nyquist(mod_freq,
+  #                                 mod_amp,
+  #                                 sample_rate)
 
-  omega_mod_freq = mod_freq * (2.0 * np.pi)  # rad / sec
-  omega_mod_freq = omega_mod_freq / float(sample_rate)  # rad / sample
-
-  if use_angular_cumsum:
-    phase_mod_freq = angular_cumsum(omega_mod_freq)
-  else:
-    phase_mod_freq = tf.cumsum(omega_mod_freq, axis=1)
-
-  wav_mod_freq = tf.sin(phase_mod_freq)
-  wav_mod_freq = wav_mod_freq * mod_amp
-  # audio = tf.reduce_sum(wav_mod_freq, axis=-1)  # [mb, n_samples]
-
-  # print(wav_mod_freq[0,:100,0])
-  # print("min", tf.reduce_min(audio[0,:], axis=0).numpy())
-  # print("max", tf.reduce_max(audio[0,:], axis=0).numpy())
-
-  omega_carr_freq = carr_freq * (2.0 * np.pi)  # rad / sec
-  omega_carr_freq = omega_carr_freq / float(sample_rate)  # rad / sample
-  # omega_carr_freq = omega_carr_freq + wav_mod_freq
+  omega2 = f0 * i2 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
+  omega1 = f0 * i1 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
 
   if use_angular_cumsum:
-    phase_carr_freq = angular_cumsum(omega_carr_freq)
+    phase2 = angular_cumsum(omega2)
+    phase1 = angular_cumsum(omega1)
   else:
-    phase_carr_freq = tf.cumsum(omega_carr_freq, axis=1)
+    phase2 = tf.cumsum(omega2, axis=1)
+    phase1 = tf.cumsum(omega1, axis=1)
 
-  wavs_carr_ferq = tf.sin(phase_carr_freq + wav_mod_freq)
-  audio = carr_amp * wavs_carr_ferq  # [mb, n_samples, 1]
+  x2 = tf.sin(phase2)
+  x1 = tf.sin(phase1 + m21 * x2)
+
+  audio = a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio

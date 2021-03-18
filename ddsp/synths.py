@@ -409,28 +409,26 @@ class FrequencyModulation(processors.Processor):
     self.amp_scale_fn = amp_scale_fn
     self.amp_resample_method = amp_resample_method
 
-  def get_controls(self,
-                   carr_amp,
-                   carr_freq,
-                   mod_amp,
-                   mod_freq):
+  def get_controls(self, f0,
+                   a1, i1,
+                   a2, i2,
+                   m21
+                   ):
+
     """Convert network output tensors into a dictionary of synthesizer controls.
 
     Args:
-      carr_amp: 3-D Tensor of synthesizer controls, of shape
-        [batch, time, 1].
-      carr_freq: Fundamental frequencies in hertz. Shape [batch, time, 1].
-      mod_amp: 3-D Tensor of synthesizer controls, of shape
-        [batch, time, 1].
-      mod_freq: 3-D Tensor of synthesizer controls, of shape
-        [batch, time, 1]. Expects strictly positive in Hertz.
+      carr_amp: 3-D Tensor of synthesizer controls, of shape [batch, 1].
+      carr_freq: Fundamental frequencies in hertz. Shape [batch, 1].
+      mod_amp: 3-D Tensor of synthesizer controls, of shape [batch, 1].
+      mod_freq: 3-D Tensor of synthesizer controls, of shape [batch, 1]. Expects strictly positive in Hertz.
 
     Returns:
       controls: Dictionary of tensors of synthesizer controls.
     """
     # Scale the inputs.
-    if self.amp_scale_fn is not None:
-      carr_amp = self.amp_scale_fn(carr_amp)
+    # if self.amp_scale_fn is not None:
+    #   carr_amp = self.amp_scale_fn(carr_amp)
       # TODO(juanalonso): Do we need to rescale mod_amps?
       # mod_amps = self.amp_scale_fn(mod_amps)
 
@@ -440,12 +438,17 @@ class FrequencyModulation(processors.Processor):
     #                                          mod_amps,
     #                                          self.sample_rate)
 
-    return {'carr_amp': carr_amp,
-            'carr_freq': carr_freq,
-            'mod_amp': mod_amp,
-            'mod_freq': mod_freq}
+    return {'f0': f0,
+            'a1': a1, 'i1': i1,
+            'a2': a2, 'i2': i2,
+            'm21' : m21,
+           }
 
-  def get_signal(self,  carr_amp, carr_freq, mod_amp, mod_freq):
+  def get_signal(self, f0,
+                 a1, i1,
+                 a2, i2,
+                 m21,
+                 ):
     """Synthesize audio with am synthesizer from controls.
 
     Args:
@@ -462,17 +465,19 @@ class FrequencyModulation(processors.Processor):
       signal: A tensor of shape [batch, n_samples].
     """
     # Create sample-wise envelopes.
-    carr_amp_envelopes = core.resample(carr_amp, self.n_samples,
-                                        method=self.amp_resample_method)
-    carr_freq_envelopes = core.resample(carr_freq, self.n_samples)
-    mod_amp_envelopes = core.resample(mod_amp, self.n_samples,
-                                        method=self.amp_resample_method)
-    mod_freq_envelopes = core.resample(mod_freq, self.n_samples)
+    f0_env = core.resample(f0, self.n_samples)
+    a1_env = core.resample(a1, self.n_samples)
+    i1_env = core.resample(i1, self.n_samples)
+    a2_env = core.resample(a2, self.n_samples)
+    i2_env = core.resample(i2, self.n_samples)
+    m21_env = core.resample(m21, self.n_samples)
 
-    signal = core.modulate_frequency(carr_amp=carr_amp_envelopes,
-                                     carr_freq=carr_freq_envelopes,
-                                     mod_amp=mod_amp_envelopes,
-                                     mod_freq=mod_freq_envelopes,
+    signal = core.modulate_frequency(f0=f0_env,
+                                     a1=a1_env,
+                                     i1=i1_env,
+                                     a2=a2_env,
+                                     i2=i2_env,
+                                     m21=m21_env,
                                      sample_rate=self.sample_rate)
     return signal
     
