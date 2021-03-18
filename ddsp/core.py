@@ -929,9 +929,14 @@ def modulate_frequency(f0: tf.Tensor,
                        i2: tf.Tensor,
                        a3: tf.Tensor,
                        i3: tf.Tensor,
+                       a4: tf.Tensor,
+                       i4: tf.Tensor,
                        m21: tf.Tensor,
                        m31: tf.Tensor,
                        m32: tf.Tensor,
+                       m41: tf.Tensor,
+                       m42: tf.Tensor,
+                       m43: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
@@ -967,32 +972,41 @@ def modulate_frequency(f0: tf.Tensor,
   i2 = tf_float32(i2)
   a3 = tf_float32(a3)
   i3 = tf_float32(i3)
+  a4 = tf_float32(a4)
+  i4 = tf_float32(i4)
   m21 = tf_float32(m21)
   m31 = tf_float32(m31)
   m32 = tf_float32(m32)
+  m41 = tf_float32(m41)
+  m42 = tf_float32(m42)
+  m43 = tf_float32(m43)
 
   # mod_amp = remove_above_nyquist(mod_freq,
   #                                 mod_amp,
   #                                 sample_rate)
 
+  omega4 = f0 * i4 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega3 = f0 * i3 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega2 = f0 * i2 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega1 = f0 * i1 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
 
   if use_angular_cumsum:
+    phase4 = angular_cumsum(omega4)
     phase3 = angular_cumsum(omega3)
     phase2 = angular_cumsum(omega2)
     phase1 = angular_cumsum(omega1)
   else:
+    phase4 = tf.cumsum(omega4, axis=1)
     phase3 = tf.cumsum(omega3, axis=1)
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x3 = tf.sin(phase3)
-  x2 = tf.sin(phase2 + m32 * x3)
-  x1 = tf.sin(phase1 + m31 * x3 + m21 * x2)
+  x4 = tf.sin(phase4)
+  x3 = tf.sin(phase3 + m43 * x4)
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3)
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2)
 
-  audio = a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
+  audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
