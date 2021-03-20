@@ -433,25 +433,13 @@ class FrequencyModulation(processors.Processor):
     """Convert network output tensors into a dictionary of synthesizer controls.
 
     Args:
-      carr_amp: 3-D Tensor of synthesizer controls, of shape [batch, 1].
-      carr_freq: Fundamental frequencies in hertz. Shape [batch, 1].
-      mod_amp: 3-D Tensor of synthesizer controls, of shape [batch, 1].
-      mod_freq: 3-D Tensor of synthesizer controls, of shape [batch, 1]. Expects strictly positive in Hertz.
+      f0_hz: Fundamental frequencies in hertz. Shape [batch, time , 1]
+      op1-4: Amp, idx and ADSR of each operator. Shape [batch, time , 10]
+      modulators: Modulation between operators. Shape [batch, time , 6]
 
     Returns:
       controls: Dictionary of tensors of synthesizer controls.
     """
-    # Scale the inputs.
-    # if self.amp_scale_fn is not None:
-    #   carr_amp = self.amp_scale_fn(carr_amp)
-      # TODO(juanalonso): Do we need to rescale mod_amps?
-      # mod_amps = self.amp_scale_fn(mod_amps)
-
-    # if self.freq_scale_fn is not None:
-    #   mod_freqs = self.freq_scale_fn(mod_freqs)
-    #   mod_amps = core.remove_above_nyquist(mod_freqs,
-    #                                          mod_amps,
-    #                                          self.sample_rate)
 
     return {'f0': f0,
             'op1': op1, 'op2': op2, 'op3': op3, 'op4': op4,
@@ -465,14 +453,9 @@ class FrequencyModulation(processors.Processor):
     """Synthesize audio with fm synthesizer from controls.
 
     Args:
-      carr_amp: Amplitude tensor of shape [batch, n_frames, 1]. Expects
-        float32 that is strictly positive.
-      carr_freq: The fundamental frequency in Hertz. Tensor of shape [batch,
-        n_frames, 1].
-      mod_amp: Amplitude tensor of shape [batch, n_frames, 1].
-        Expects float32 that is strictly positive.
-      mod_freq: Tensor of shape [batch, n_frames, 1].
-        Expects float32 in Hertz that is strictly positive.
+      f0_hz: Fundamental frequencies in hertz. Shape [batch, n_frames , 1]
+      op1-4: Amp, idx and ADSR of each operator. Shape [batch, n_frames , 10]
+      modulators: Modulation between operators. Shape [batch, n_frames , 6]
 
     Returns:
       signal: A tensor of shape [batch, n_samples].
@@ -500,6 +483,7 @@ class FrequencyModulation(processors.Processor):
 
     signal = core.modulate_frequency(f0=f0_env,
                                      op1=op1_env, op2=op2_env, op3=op3_env, op4=op4_env,
+                                     op1_adsr=op1_adsr, op2_adsr=op2_adsr, op3_adsr=op3_adsr, op4_adsr=op4_adsr, 
                                      modulators = modulators_env,
                                      sample_rate=self.sample_rate)
     return signal
