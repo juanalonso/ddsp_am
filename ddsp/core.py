@@ -908,6 +908,7 @@ def modulate_amplitude(carr_amp: tf.Tensor,
 @gin.configurable
 def modulate_frequency(f0: tf.Tensor,
                        op1: tf.Tensor, op2: tf.Tensor, op3: tf.Tensor, op4: tf.Tensor,
+                       op1_adsr: tf.Tensor, op2_adsr: tf.Tensor, op3_adsr: tf.Tensor, op4_adsr: tf.Tensor,
                        modulators: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
@@ -942,9 +943,14 @@ def modulate_frequency(f0: tf.Tensor,
   op2 = tf_float32(op2)
   op3 = tf_float32(op3)
   op4 = tf_float32(op4)
+  op1_adsr = tf_float32(op1_adsr)
+  op2_adsr = tf_float32(op2_adsr)
+  op3_adsr = tf_float32(op3_adsr)
+  op4_adsr = tf_float32(op4_adsr)
+
   modulators = tf_float32(modulators)
 
-  n_samp = f0.shape[1]
+  # n_samp = f0.shape[1]
 
   a1,i1=tf.split(op1,[1,1], axis=2)
   a2,i2=tf.split(op2,[1,1], axis=2)
@@ -973,10 +979,10 @@ def modulate_frequency(f0: tf.Tensor,
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x4 = tf.sin(phase4)
-  x3 = tf.sin(phase3 + m43 * x4)
-  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3)
-  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2)
+  x4 = tf.sin(phase4) * op4_adsr
+  x3 = tf.sin(phase3 + m43 * x4) * op3_adsr
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * op2_adsr
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * op1_adsr
 
   audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
@@ -1016,8 +1022,11 @@ def resampleADSR(adsr: tf.Tensor, n_samples):
   envelope = tf.linspace(adsr[0,0,4], adsr[0,0,5], tf.cast(adsr[0,0,0], dtype=tf.int32))
   envelope = tf.concat((envelope, tf.linspace(adsr[0,0,5], adsr[0,0,6], tf.cast(adsr[0,0,1], dtype=tf.int32))), axis=0)
   envelope = tf.concat((envelope, tf.ones(tf.cast(adsr[0,0,2], dtype=tf.int32))*adsr[0,0,6]), axis=0)
-  envelope = tf.concat((envelope, tf.linspace(adsr[0,0,6], adsr[0,0,7], tf.cast(adsr[0,0,3], dtype=tf.int32))), axis=0)
+  #envelope = tf.concat((envelope, tf.linspace(adsr[0,0,6], adsr[0,0,7], tf.cast(adsr[0,0,3], dtype=tf.int32))), axis=0)
+  envelope = tf.concat((envelope, tf.linspace(adsr[0,0,6], 0.0, tf.cast(adsr[0,0,3], dtype=tf.int32))), axis=0)
   envelope = tf.concat((envelope, tf.zeros(n_samples-envelope.get_shape().as_list()[0])), axis=0)
+  envelope = tf.expand_dims(envelope, axis=-1)
+  envelope = tf.expand_dims(envelope, axis=0)
   return envelope
 
 def get_harmonic_frequencies(frequencies: tf.Tensor,
