@@ -989,31 +989,31 @@ def modulate_frequency(f0: tf.Tensor,
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x4 = tf.sin(phase4) * get_ADSR(n_samp, a4)
-  x3 = tf.sin(phase3 + m43 * x4) * get_ADSR(n_samp, a3)
-  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * get_ADSR(n_samp, a2)
-  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * get_ADSR(n_samp, a1)
+  x4 = tf.sin(phase4)
+  x3 = tf.sin(phase3 + m43 * x4)
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3)
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2)
 
   audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
 
-def get_ADSR(n_samp, amp):
-  if amp[0,0,0]==0 :
-    adsr = np.linspace(np.random.random(), np.random.random(), n_samp)
-  else:
-    v = 0.7
-    p = 5000
-    adsr = np.linspace(0,1,p)
-    p = 2000
-    adsr = np.concatenate((adsr, np.linspace(1,v,p)))
-    p = 35000
-    adsr = np.concatenate((adsr, np.ones(p)*v))
-    p = 15000
-    adsr = np.concatenate((adsr, np.linspace(v,0,p)))
-    adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
-  adsr = adsr[np.newaxis, :, np.newaxis]
+# def get_ADSR(n_samp, amp):
+#   if amp[0,0,0]==0 :
+#     adsr = np.linspace(np.random.random(), np.random.random(), n_samp)
+#   else:
+#     v = 0.7
+#     p = 5000
+#     adsr = np.linspace(0,1,p)
+#     p = 2000
+#     adsr = np.concatenate((adsr, np.linspace(1,v,p)))
+#     p = 35000
+#     adsr = np.concatenate((adsr, np.ones(p)*v))
+#     p = 15000
+#     adsr = np.concatenate((adsr, np.linspace(v,0,p)))
+#     adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
+#   adsr = adsr[np.newaxis, :, np.newaxis]
 
   # v = np.random.random()
   # p = np.random.randint(n_samp//5)
@@ -1026,9 +1026,15 @@ def get_ADSR(n_samp, amp):
   # adsr = np.concatenate((adsr, np.linspace(v,0,p)))
   # adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
   # adsr = adsr[np.newaxis, :, np.newaxis]
-  return adsr
+  #return adsr
 
-
+def resampleADSR(adsr: tf.Tensor, n_samples):
+  envelope = tf.linspace(adsr[0,0,4], adsr[0,0,5], tf.cast(adsr[0,0,0], dtype=tf.int32))
+  envelope = tf.concat((envelope, tf.linspace(adsr[0,0,5], adsr[0,0,6], tf.cast(adsr[0,0,1], dtype=tf.int32))), axis=0)
+  envelope = tf.concat((envelope, tf.ones(tf.cast(adsr[0,0,2], dtype=tf.int32))*adsr[0,0,6]), axis=0)
+  envelope = tf.concat((envelope, tf.linspace(adsr[0,0,6], adsr[0,0,7], tf.cast(adsr[0,0,3], dtype=tf.int32))), axis=0)
+  envelope = tf.concat((envelope, tf.zeros(n_samples-envelope.get_shape().as_list()[0])), axis=0)
+  return envelope
 
 def get_harmonic_frequencies(frequencies: tf.Tensor,
                              n_harmonics: int) -> tf.Tensor:

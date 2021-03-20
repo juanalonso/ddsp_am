@@ -462,7 +462,7 @@ class FrequencyModulation(processors.Processor):
                  op1, op2, op3, op4,
                  modulators
                  ):
-    """Synthesize audio with am synthesizer from controls.
+    """Synthesize audio with fm synthesizer from controls.
 
     Args:
       carr_amp: Amplitude tensor of shape [batch, n_frames, 1]. Expects
@@ -479,10 +479,23 @@ class FrequencyModulation(processors.Processor):
     """
     # Create sample-wise envelopes.
     f0_env = core.resample(f0, self.n_samples)
-    op1_env = core.resample(op1, self.n_samples)
-    op2_env = core.resample(op2, self.n_samples)
-    op3_env = core.resample(op3, self.n_samples)
-    op4_env = core.resample(op4, self.n_samples)
+
+    op1_env, op1_adsr = tf.split(op1, [2,-1], axis=2)
+    op1_env = core.resample(op1_env, self.n_samples)
+    op1_adsr = core.resampleADSR(op1_adsr, self.n_samples)
+
+    op2_env, op2_adsr = tf.split(op2, [2,-1], axis=2)
+    op2_env = core.resample(op2_env, self.n_samples)
+    op2_adsr = core.resampleADSR(op2_adsr, self.n_samples)
+
+    op3_env, op3_adsr = tf.split(op3, [2,-1], axis=2)
+    op3_env = core.resample(op3_env, self.n_samples)
+    op3_adsr = core.resampleADSR(op3_adsr, self.n_samples)
+
+    op4_env, op4_adsr = tf.split(op4, [2,-1], axis=2)
+    op4_env = core.resample(op4_env, self.n_samples)
+    op4_adsr = core.resampleADSR(op4_adsr, self.n_samples)
+
     modulators_env = core.resample(modulators, self.n_samples)
 
     signal = core.modulate_frequency(f0=f0_env,
@@ -490,4 +503,3 @@ class FrequencyModulation(processors.Processor):
                                      modulators = modulators_env,
                                      sample_rate=self.sample_rate)
     return signal
-    
