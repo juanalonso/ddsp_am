@@ -426,13 +426,8 @@ class FrequencyModulation(processors.Processor):
     self.amp_resample_method = amp_resample_method
 
   def get_controls(self, f0,
-                   a1, i1,
-                   a2, i2,
-                   a3, i3,
-                   a4, i4,
-                   m21,
-                   m31, m32,
-                   m41, m42, m43
+                   op1, op2, op3, op4,
+                   modulators
                    ):
 
     """Convert network output tensors into a dictionary of synthesizer controls.
@@ -459,23 +454,13 @@ class FrequencyModulation(processors.Processor):
     #                                          self.sample_rate)
 
     return {'f0': f0,
-            'a1': a1, 'i1': i1,
-            'a2': a2, 'i2': i2,
-            'a3': a3, 'i3': i3,
-            'a4': a4, 'i4': i4,
-            'm21' : m21,
-            'm31' : m31, 'm32' : m32,
-            'm41' : m41, 'm42' : m42, 'm43' : m43,
+            'op1': op1, 'op2': op2, 'op3': op3, 'op4': op4,
+            'modulators': modulators,
            }
 
   def get_signal(self, f0,
-                 a1, i1,
-                 a2, i2,
-                 a3, i3,
-                 a4, i4,
-                 m21,
-                 m31, m32,
-                 m41, m42, m43
+                 op1, op2, op3, op4,
+                 modulators
                  ):
     """Synthesize audio with am synthesizer from controls.
 
@@ -494,33 +479,15 @@ class FrequencyModulation(processors.Processor):
     """
     # Create sample-wise envelopes.
     f0_env = core.resample(f0, self.n_samples)
-    a1_env = core.resample(a1, self.n_samples)
-    i1_env = core.resample(i1, self.n_samples)
-    a2_env = core.resample(a2, self.n_samples)
-    i2_env = core.resample(i2, self.n_samples)
-    a3_env = core.resample(a3, self.n_samples)
-    i3_env = core.resample(i3, self.n_samples)
-    a4_env = core.resample(a4, self.n_samples)
-    i4_env = core.resample(i4, self.n_samples)
-    m21_env = core.resample(m21, self.n_samples)
-    m31_env = core.resample(m31, self.n_samples)
-    m32_env = core.resample(m32, self.n_samples)
-    m41_env = core.resample(m41, self.n_samples)
-    m42_env = core.resample(m42, self.n_samples)
-    m43_env = core.resample(m43, self.n_samples)
+    op1_env = core.resample(op1, self.n_samples)
+    op2_env = core.resample(op2, self.n_samples)
+    op3_env = core.resample(op3, self.n_samples)
+    op4_env = core.resample(op4, self.n_samples)
+    modulators_env = core.resample(modulators, self.n_samples)
 
     signal = core.modulate_frequency(f0=f0_env,
-                                     a1=a1_env,
-                                     i1=i1_env,
-                                     a2=a2_env,
-                                     i2=i2_env,
-                                     a3=a3_env,
-                                     i3=i3_env,
-                                     a4=a4_env,
-                                     i4=i4_env,
-                                     m21=m21_env,
-                                     m31=m31_env, m32=m32_env,
-                                     m41=m41_env, m42=m42_env, m43=m43_env,
+                                     op1=op1_env, op2=op2_env, op3=op3_env, op4=op4_env,
+                                     modulators = modulators_env,
                                      sample_rate=self.sample_rate)
     return signal
     

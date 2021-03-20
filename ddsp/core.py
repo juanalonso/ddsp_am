@@ -923,20 +923,8 @@ def modulate_amplitude(carr_amp: tf.Tensor,
 # TODO(juanalonso): Rewrite 'Args:'' section
 @gin.configurable
 def modulate_frequency(f0: tf.Tensor,
-                       a1: tf.Tensor,
-                       i1: tf.Tensor,
-                       a2: tf.Tensor,
-                       i2: tf.Tensor,
-                       a3: tf.Tensor,
-                       i3: tf.Tensor,
-                       a4: tf.Tensor,
-                       i4: tf.Tensor,
-                       m21: tf.Tensor,
-                       m31: tf.Tensor,
-                       m32: tf.Tensor,
-                       m41: tf.Tensor,
-                       m42: tf.Tensor,
-                       m43: tf.Tensor,
+                       op1: tf.Tensor, op2: tf.Tensor, op3: tf.Tensor, op4: tf.Tensor,
+                       modulators: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
   """Generates audio from sample-wise frequencies for a bank of oscillators.
@@ -966,20 +954,20 @@ def modulate_frequency(f0: tf.Tensor,
   # print ("f0_hz", f0_hz.shape)
 
   f0 = tf_float32(f0)
-  a1 = tf_float32(a1)
-  i1 = tf_float32(i1)
-  a2 = tf_float32(a2)
-  i2 = tf_float32(i2)
-  a3 = tf_float32(a3)
-  i3 = tf_float32(i3)
-  a4 = tf_float32(a4)
-  i4 = tf_float32(i4)
-  m21 = tf_float32(m21)
-  m31 = tf_float32(m31)
-  m32 = tf_float32(m32)
-  m41 = tf_float32(m41)
-  m42 = tf_float32(m42)
-  m43 = tf_float32(m43)
+  op1 = tf_float32(op1)
+  op2 = tf_float32(op2)
+  op3 = tf_float32(op3)
+  op4 = tf_float32(op4)
+  modulators = tf_float32(modulators)
+
+  n_samp = f0.shape[1]
+
+  a1,i1=tf.split(op1,[1,1], axis=2)
+  a2,i2=tf.split(op2,[1,1], axis=2)
+  a3,i3=tf.split(op3,[1,1], axis=2)
+  a4,i4=tf.split(op4,[1,1], axis=2)
+
+  m21, m31, m32, m41, m42, m43 = tf.split(modulators,[1,1,1,1,1,1], axis=2)
 
   # mod_amp = remove_above_nyquist(mod_freq,
   #                                 mod_amp,
@@ -1001,16 +989,44 @@ def modulate_frequency(f0: tf.Tensor,
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x4 = tf.sin(phase4)
-  x3 = tf.sin(phase3 + m43 * x4)
-  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3)
-  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2)
+  x4 = tf.sin(phase4) * get_ADSR(n_samp, a4)
+  x3 = tf.sin(phase3 + m43 * x4) * get_ADSR(n_samp, a3)
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * get_ADSR(n_samp, a2)
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * get_ADSR(n_samp, a1)
 
   audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
 
+def get_ADSR(n_samp, amp):
+  if amp[0,0,0]==0 :
+    adsr = np.linspace(np.random.random(), np.random.random(), n_samp)
+  else:
+    v = 0.7
+    p = 5000
+    adsr = np.linspace(0,1,p)
+    p = 2000
+    adsr = np.concatenate((adsr, np.linspace(1,v,p)))
+    p = 35000
+    adsr = np.concatenate((adsr, np.ones(p)*v))
+    p = 15000
+    adsr = np.concatenate((adsr, np.linspace(v,0,p)))
+    adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
+  adsr = adsr[np.newaxis, :, np.newaxis]
+
+  # v = np.random.random()
+  # p = np.random.randint(n_samp//5)
+  # adsr = np.linspace(0,1,p)
+  # p = np.random.randint(n_samp//5)
+  # adsr = np.concatenate((adsr, np.linspace(1,v,p)))
+  # p = np.random.randint(2*n_samp//5)
+  # adsr = np.concatenate((adsr, np.ones(p)*v))
+  # p = np.random.randint(n_samp//5)
+  # adsr = np.concatenate((adsr, np.linspace(v,0,p)))
+  # adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
+  # adsr = adsr[np.newaxis, :, np.newaxis]
+  return adsr
 
 
 
