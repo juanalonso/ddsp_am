@@ -1,0 +1,33 @@
+# -*-Python-*-
+# Decodes from (loudness, f0).
+
+include 'models/ae.gin'
+
+# Encoder
+Autoencoder.encoder = None
+
+# Decoder
+Autoencoder.decoder = @decoders.RnnFcDecoder()
+#RnnFcDecoder.rnn_channels = 32
+RnnFcDecoder.rnn_channels = 512
+RnnFcDecoder.rnn_type = 'gru'
+RnnFcDecoder.ch = 512
+RnnFcDecoder.layers_per_stack = 3
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_scaled')
+RnnFcDecoder.output_splits = (('amps', 1),
+                              ('mod_amps', 1),
+                              ('mod_freqs', 1))
+
+# ==============
+# ProcessorGroup
+# ==============
+
+ProcessorGroup.dag = [
+  (@synths.FrequencyModulation(),
+    ['amps', 'mod_amps', 'mod_freqs', 'f0_hz']),
+]
+
+# FM Synthesizer
+FrequencyModulation.name = 'fmsynth'
+FrequencyModulation.n_samples = 64000
+FrequencyModulation.sample_rate = 16000
