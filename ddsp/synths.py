@@ -483,7 +483,7 @@ class FrequencyModulation(processors.Processor):
 
     signal = core.modulate_frequency(f0=f0_env,
                                      op1=op1_env, op2=op2_env, op3=op3_env, op4=op4_env,
-                                     op1_adsr=op1_adsr, op2_adsr=op2_adsr, op3_adsr=op3_adsr, op4_adsr=op4_adsr, 
+                                     op1_adsr=op1_adsr, op2_adsr=op2_adsr, op3_adsr=op3_adsr, op4_adsr=op4_adsr,
                                      modulators = modulators_env,
                                      sample_rate=self.sample_rate)
     return signal
