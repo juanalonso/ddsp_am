@@ -830,10 +830,10 @@ def oscillator_bank(frequency_envelopes: tf.Tensor,
 # TODO(jesseengel): Remove reliance on global injection for angular cumsum.
 # TODO(juanalonso): Rewrite 'Args:'' section
 @gin.configurable
-def modulate_amplitude(carr_amp: tf.Tensor,
-                       carr_freq: tf.Tensor,
-                       mod_amp: tf.Tensor,
-                       mod_freq: tf.Tensor,
+def modulate_amplitude(amps: tf.Tensor,
+                       f0_hz: tf.Tensor,
+                       mod_amps: tf.Tensor,
+                       mod_f0_hz: tf.Tensor,
                        sample_rate: int = 16000,
                        sum_sinusoids: bool = True,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
@@ -859,43 +859,30 @@ def modulate_amplitude(carr_amp: tf.Tensor,
       sum_sinusoids=False, else shape is [batch_size, n_samples].
   """
 
-  carr_amp = tf_float32(carr_amp)
-  carr_freq = tf_float32(carr_freq)
-  mod_amp = tf_float32(mod_amp)
-  mod_freq = tf_float32(mod_freq)
+  amps = tf_float32(amps)
+  f0_hz = tf_float32(f0_hz)
+  mod_amps = tf_float32(mod_amps)
+  mod_f0_hz = tf_float32(mod_f0_hz)
 
-  stacked = False
+  # mod_amps = remove_above_nyquist(mod_f0_hz,
+  #                                 mod_amps,
+  #                                 sample_rate)
+  
+  omegas_mod_f0_hz = mod_f0_hz * 2.0 * np.pi / float(sample_rate)  # rad / sample
 
-  if stacked:
-    stacked_freqs = tf.stack((mod_freq[0],carr_freq[0]), axis=0)
-    mod_amp = remove_above_nyquist(mod_freq,
-                                    mod_amp,
-                                    sample_rate)
-    omegas = stacked_freqs * (2.0 * np.pi)  # rad / sec
-    omegas = omegas / float(sample_rate)  # rad / sample
-    if use_angular_cumsum:
-      phases = angular_cumsum(omegas)
-    else:
-      phases = tf.cumsum(omegas, axis=1)
-    wavs = tf.sin(phases)
-    audio = carr_amp * (1 + mod_amp * wavs[0]) * wavs[1] # [mb, n_samples, n_sinusoids]
+  omegas_f0_hz = f0_hz * 2.0 * np.pi / float(sample_rate)  # rad / sample
+
+  if use_angular_cumsum:
+    phases_mod_f0_hz = angular_cumsum(omegas_mod_f0_hz)
+    phases_f0_hz = angular_cumsum(omegas_f0_hz)
   else:
-    mod_amp = remove_above_nyquist(mod_freq,
-                                    mod_amp,
-                                    sample_rate)
-    omegas_mod_freq = mod_freq * (2.0 * np.pi)  # rad / sec
-    omegas_mod_freq = omegas_mod_freq / float(sample_rate)  # rad / sample
-    omegas_carr_freq = carr_freq * (2.0 * np.pi)  # rad / sec
-    omegas_carr_freq = omegas_carr_freq / float(sample_rate)  # rad / sample
-    if use_angular_cumsum:
-      phases_mod_freq = angular_cumsum(omegas_mod_freq)
-      phases_carr_freq = angular_cumsum(omegas_carr_freq)
-    else:
-      phases_mod_freq = tf.cumsum(omegas_mod_freq, axis=1)
-      phases_carr_freq = tf.cumsum(omegas_carr_freq, axis=1)
-    sin_mod_freq = tf.sin(phases_mod_freq)
-    sin_carr_freq = tf.sin(phases_carr_freq)
-    audio = carr_amp * sin_carr_freq * (1.0 + mod_amp * sin_mod_freq) # [mb, n_samples, n_sinusoids]
+    phases_mod_f0_hz = tf.cumsum(omegas_mod_f0_hz, axis=1)
+    phases_f0_hz = tf.cumsum(omegas_f0_hz, axis=1)
+
+  sin_mod_f0_hz = tf.sin(phases_mod_f0_hz)
+  sin_f0_hz = tf.sin(phases_f0_hz)
+
+  audio = amps * sin_f0_hz * (1.0 + mod_amps * sin_mod_f0_hz) # [mb, n_samples, n_sinusoids]
 
   if sum_sinusoids:
     audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]

@@ -327,19 +327,19 @@ class AmplitudeModulation(processors.Processor):
     # self.freq_scale_fn = freq_scale_fn
 
   def get_controls(self,
-                   carr_amp,
-                   carr_freq,
-                   mod_amp,
-                   mod_freq):
+                   amps,
+                   f0_hz,
+                   mod_amps,
+                   mod_f0_hz):
     """Convert network output tensors into a dictionary of synthesizer controls.
 
     Args:
-      carr_amp: 3-D Tensor of synthesizer controls, of shape
+      amps: 3-D Tensor of synthesizer controls, of shape
         [batch, time, 1].
-      carr_freq: Fundamental frequencies in hertz. Shape [batch, time, 1].
-      mod_amp: 3-D Tensor of synthesizer controls, of shape
+      f0_hz: Fundamental frequencies in hertz. Shape [batch, time, 1].
+      mod_amps: 3-D Tensor of synthesizer controls, of shape
         [batch, time, 1].
-      mod_freq: 3-D Tensor of synthesizer controls, of shape
+      mod_f0_hz: 3-D Tensor of synthesizer controls, of shape
         [batch, time, 1]. Expects strictly positive in Hertz.
 
     Returns:
@@ -347,49 +347,49 @@ class AmplitudeModulation(processors.Processor):
     """
     # Scale the inputs.
     if self.amp_scale_fn is not None:
-      carr_amp = self.amp_scale_fn(carr_amp)
-      # TODO(juanalonso): Do we need to rescale mod_amp?
-      mod_amp = self.amp_scale_fn(mod_amp)
+      amps = self.amp_scale_fn(amps)
+      # TODO(juanalonso): Do we need to rescale mod_amps?
+      mod_amps = self.amp_scale_fn(mod_amps)
 
     # if self.freq_scale_fn is not None:
-    #   mod_freq = self.freq_scale_fn(mod_freq)
-    #   mod_amp = core.remove_above_nyquist(mod_freq,
-    #                                          mod_amp,
+    #   mod_f0_hz = self.freq_scale_fn(mod_f0_hz)
+    #   mod_amps = core.remove_above_nyquist(mod_f0_hz,
+    #                                          mod_amps,
     #                                          self.sample_rate)
 
-    return {'carr_amp': carr_amp,
-            'carr_freq': carr_freq,
-            'mod_amp': mod_amp,
-            'mod_freq': mod_freq}
+    return {'amps': amps,
+            'f0_hz': f0_hz,
+            'mod_amps': mod_amps,
+            'mod_f0_hz': mod_f0_hz}
 
-  def get_signal(self,  carr_amp, carr_freq, mod_amp, mod_freq):
+  def get_signal(self,  amps, f0_hz, mod_amps, mod_f0_hz):
     """Synthesize audio with am synthesizer from controls.
 
     Args:
-      carr_amp: Amplitude tensor of shape [batch, n_frames, 1]. Expects
+      amps: Amplitude tensor of shape [batch, n_frames, 1]. Expects
         float32 that is strictly positive.
-      carr_freq: The fundamental frequency in Hertz. Tensor of shape [batch,
+      f0_hz: The fundamental frequency in Hertz. Tensor of shape [batch,
         n_frames, 1].
-      mod_amp: Amplitude tensor of shape [batch, n_frames, 1].
+      mod_amps: Amplitude tensor of shape [batch, n_frames, 1].
         Expects float32 that is strictly positive.
-      mod_freq: Tensor of shape [batch, n_frames, 1].
+      mod_f0_hz: Tensor of shape [batch, n_frames, 1].
         Expects float32 in Hertz that is strictly positive.
 
     Returns:
       signal: A tensor of shape [batch, n_samples].
     """
     # Create sample-wise envelopes.
-    carr_amp_envelopes = core.resample(carr_amp, self.n_samples,
+    amps_envelopes = core.resample(amps, self.n_samples,
                                         method=self.amp_resample_method)
-    carr_freq_envelopes = core.resample(carr_freq, self.n_samples)
-    mod_amp_envelopes = core.resample(mod_amp, self.n_samples,
+    f0_hz_envelopes = core.resample(f0_hz, self.n_samples)
+    mod_amps_envelopes = core.resample(mod_amps, self.n_samples,
                                         method=self.amp_resample_method)
-    mod_freq_envelopes = core.resample(mod_freq, self.n_samples)
+    mod_f0_hz_envelopes = core.resample(mod_f0_hz, self.n_samples)
 
-    signal = core.modulate_amplitude(carr_amp=carr_amp_envelopes,
-                                     carr_freq=carr_freq_envelopes,
-                                     mod_amp=mod_amp_envelopes,
-                                     mod_freq=mod_freq_envelopes,
+    signal = core.modulate_amplitude(amps=amps_envelopes,
+                                     f0_hz=f0_hz_envelopes,
+                                     mod_amps=mod_amps_envelopes,
+                                     mod_f0_hz=mod_f0_hz_envelopes,
                                      sample_rate=self.sample_rate)
     return signal
 
