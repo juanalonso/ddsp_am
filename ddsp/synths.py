@@ -409,6 +409,8 @@ class AmplitudeModulation(processors.Processor):
                                      mod_f0_hz=mod_f0_hz_envelopes,
                                      sample_rate=self.sample_rate)
     return signal
+
+
 @gin.register
 class FrequencyModulation(processors.Processor):
   """Synthesize audio with frequency modulation."""
