@@ -25,6 +25,8 @@ import numpy as np
 from scipy import fftpack
 import tensorflow.compat.v2 as tf
 
+import sys
+
 Number = TypeVar('Number', int, float, np.ndarray, tf.Tensor)
 
 
@@ -883,7 +885,7 @@ def modulate_amplitude(amps: tf.Tensor,
   # mod_amps = remove_above_nyquist(mod_f0_hz,
   #                                 mod_amps,
   #                                 sample_rate)
-  
+
   omegas_mod_f0_hz = mod_f0_hz * 2.0 * np.pi / float(sample_rate)  # rad / sample
 
   omegas_f0_hz = f0_hz * 2.0 * np.pi / float(sample_rate)  # rad / sample
@@ -1025,12 +1027,15 @@ def resampleADSR(adsr: tf.Tensor, n_samples):
 
   # We should only have one frame
   output = np.zeros([adsr.shape[0], n_samples])
+  # sys.stderr.write('- ADSR ------>')
+  # sys.stderr.write(str(adsr) + '<-------\n')
 
   for b in range(adsr.shape[0]): #batch
 
     f = 0
     # for f in range(adsr.shape[1]): #frame
     e = adsr[b,f]
+    # sys.stderr.write('-> b = '+str(b)+'\n**[' + str(e) + ']**\n')
 
     # A
     envelope = tf.linspace(e[4], e[5], tf.cast(e[0], dtype=tf.int32))
@@ -1048,15 +1053,21 @@ def resampleADSR(adsr: tf.Tensor, n_samples):
     # Convert to float32
     # envelope = tf.cast(envelope, dtype=tf.float32)
 
-    #Pad with zeros
-    envelope = tf.concat((envelope, tf.zeros(n_samples-envelope.shape[0])), axis=0)
+    if envelope.shape[0] is not None:
+      #Pad with zeros
+      envelope = tf.concat((envelope, tf.zeros(n_samples-envelope.shape[0])), axis=0)
+      output[b] = envelope
 
     # Permute dimensions
     # envelope = tf.transpose(envelope, perm=[1,2,0])
     # envelope = tf.expand_dims(envelope, axis=-1)
     # envelope = tf.expand_dims(envelope, axis=0)
 
-    output[b] = envelope
+    # sys.stderr.write('-> b = '+str(b)+'--------------------------------------\n')
+    # sys.stderr.write('-> envelope = '+str(envelope.shape)+'--------------------------------------\n')
+    # if envelope.shape[0] is not None:
+    # else:
+      # sys.stderr.write('NONE\nNONE\nNONE\nNONE\nNONE\nNONE\nNONE\n')
 
   output=tf.convert_to_tensor(output, dtype=tf.float32)
   output=tf.expand_dims(output, axis=-1)
