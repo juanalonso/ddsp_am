@@ -1024,53 +1024,11 @@ def modulate_frequency(f0: tf.Tensor,
   #return adsr
 
 def resampleADSR(adsr: tf.Tensor, n_samples):
-
-  # We should only have one frame
-  output = np.zeros([adsr.shape[0], n_samples])
-  # sys.stderr.write('- ADSR ------>')
-  # sys.stderr.write(str(adsr) + '<-------\n')
-
-  for b in range(adsr.shape[0]): #batch
-
-    f = 0
-    # for f in range(adsr.shape[1]): #frame
-    e = adsr[b,f]
-    # sys.stderr.write('-> b = '+str(b)+'\n**[' + str(e) + ']**\n')
-
-    # A
-    envelope = tf.linspace(e[4], e[5], tf.cast(e[0], dtype=tf.int32))
-
-    # D
-    envelope = tf.concat((envelope, tf.linspace(e[5], e[6], tf.cast(e[1], dtype=tf.int32))), axis=0)
-
-    # S
-    envelope = tf.concat((envelope, tf.ones(tf.cast(e[2], dtype=tf.int32))*e[6]), axis=0)
-
-    # R to zero
-    envelope = tf.concat((envelope, tf.linspace(e[6], 0.0, tf.cast(e[3], dtype=tf.int32))), axis=0)
-    #envelope = tf.concat((envelope, tf.linspace(e[6], e[7], tf.cast(e[3], dtype=tf.int32))), axis=0)
-
-    # Convert to float32
-    # envelope = tf.cast(envelope, dtype=tf.float32)
-
-    if envelope.shape[0] is not None:
-      #Pad with zeros
-      envelope = tf.concat((envelope, tf.zeros(n_samples-envelope.shape[0])), axis=0)
-      output[b] = envelope
-
-    # Permute dimensions
-    # envelope = tf.transpose(envelope, perm=[1,2,0])
-    # envelope = tf.expand_dims(envelope, axis=-1)
-    # envelope = tf.expand_dims(envelope, axis=0)
-
-    # sys.stderr.write('-> b = '+str(b)+'--------------------------------------\n')
-    # sys.stderr.write('-> envelope = '+str(envelope.shape)+'--------------------------------------\n')
-    # if envelope.shape[0] is not None:
-    # else:
-      # sys.stderr.write('NONE\nNONE\nNONE\nNONE\nNONE\nNONE\nNONE\n')
-
-  output=tf.convert_to_tensor(output, dtype=tf.float32)
-  output=tf.expand_dims(output, axis=-1)
+  batches = adsr.shape[0]
+  frames = adsr.shape[1]
+  env_size = n_samples//frames
+  output = tf.linspace(adsr[:,:,0], adsr[:,:,1], env_size, axis=2)
+  output = tf.reshape(output, shape=(batches, n_samples, 1))
   return output
 
 def get_harmonic_frequencies(frequencies: tf.Tensor,
