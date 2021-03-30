@@ -3,32 +3,39 @@
 
 include 'models/ae.gin'
 
+
 # Encoder
 Autoencoder.encoder = None
 
+
 # Decoder
 Autoencoder.decoder = @decoders.RnnFcDecoder()
-RnnFcDecoder.rnn_channels = 512
+RnnFcDecoder.rnn_channels = 128
 RnnFcDecoder.rnn_type = 'gru'
-RnnFcDecoder.ch = 512
-RnnFcDecoder.layers_per_stack = 3
-RnnFcDecoder.input_keys = ('f0')
-RnnFcDecoder.output_splits = (('op1', 2),
-                              ('op2', 2),
-                              ('op3', 2),
-                              ('op4', 2),
-                              ('modulators', 6))
+RnnFcDecoder.ch = 128
+RnnFcDecoder.layers_per_stack = 1
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_scaled')
+RnnFcDecoder.output_splits = (('op1', 10),
+                              ('op2', 10),
+                              ('op3', 10),
+                              ('op4', 10),
+                              ('modulators', 6),
+                              ('noise_magnitudes', 3)
+                              )
 
-# ==============
+
 # ProcessorGroup
-# ==============
-
 ProcessorGroup.dag = [
   (@synths.FrequencyModulation(),
-    ['f0', 'op1', 'op2', 'op3', 'op4', 'modulators']),
+    ['f0_hz', 'op1', 'op2', 'op3', 'op4', 'modulators']),
+  (@synths.FilteredNoise(),
+    ['noise_magnitudes']),
+  (@processors.Add(),
+    ['filtered_noise/signal', 'fmsynth/signal']),
 ]
+
 
 # FM Synthesizer
 FrequencyModulation.name = 'fmsynth'
-FrequencyModulation.n_samples = 192000
-FrequencyModulation.sample_rate = 48000
+FrequencyModulation.n_samples = 64000
+FrequencyModulation.sample_rate = 16000
