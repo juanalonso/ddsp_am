@@ -185,7 +185,6 @@ def main(unused_argv):
 
   # Training.
   if FLAGS.mode == 'train':
-    exit()
     strategy = train_util.get_strategy(tpu=FLAGS.tpu,
                                        cluster_config=FLAGS.cluster_config)
     with strategy.scope():
