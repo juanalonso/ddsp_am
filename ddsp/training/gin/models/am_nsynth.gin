@@ -1,0 +1,66 @@
+# -*-Python-*-
+
+include 'models/ae.gin'
+
+# Preprocessor - included in ae.gin
+# Autoencoder.preprocessor = @preprocessing.F0LoudnessPreprocessor()
+# F0LoudnessPreprocessor.time_steps = 1000
+
+# Encoder
+Autoencoder.encoder = None
+
+# Decoder
+Autoencoder.decoder = @decoders.RnnFcDecoder()
+RnnFcDecoder.rnn_channels = 128
+RnnFcDecoder.rnn_type = 'gru'
+RnnFcDecoder.ch = 128
+RnnFcDecoder.layers_per_stack = 1
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_scaled')
+RnnFcDecoder.output_splits = (
+                                ('amps', 1),
+                                ('mod_amps', 1),
+                                ('mod_f0_hz', 1),
+                                ('noise_magnitudes', 3),
+                                # ('harmonic_distribution', 1),
+                             )
+
+# AM Synthesizer
+AmplitudeModulation.n_samples = 64000
+AmplitudeModulation.sample_rate = 16000
+AmplitudeModulation.amp_scale_fn = @core.exp_sigmoid
+AmplitudeModulation.name = 'am'
+
+# Harmonic Synthesizer
+# Harmonic.name = 'harmonic'
+# Harmonic.n_samples = 64000
+# Harmonic.sample_rate = 16000
+# Harmonic.normalize_below_nyquist = True
+# Harmonic.scale_fn = @core.exp_sigmoid
+
+# Filtered Noise Synthesizer
+FilteredNoise.name = 'noise'
+# FilteredNoise.n_samples = 64000
+# FilteredNoise.window_size = 0
+FilteredNoise.initial_bias=-10.0
+# FilteredNoise.scale_fn = @core.exp_sigmoid
+
+# Add
+# processors.Add.name = 'add'
+
+# Losses
+# Autoencoder.losses = [
+#     @losses.SpectralLoss(),
+# ]
+# SpectralLoss.loss_type = 'L1'
+# SpectralLoss.mag_weight = 1.0
+# SpectralLoss.logmag_weight = 1.0
+
+# ProcessorGroup
+Autoencoder.processor_group = @processors.ProcessorGroup()
+
+ProcessorGroup.dag = [
+#   (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
+  (@synths.FilteredNoise(), ['noise_magnitudes']),  
+  (@synths.AmplitudeModulation(), ['amps', 'f0_hz', 'mod_amps', 'mod_f0_hz']),
+  (@processors.Add(), ['noise/signal', 'am/signal']),
+]
