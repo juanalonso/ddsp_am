@@ -18,6 +18,7 @@
 from absl import logging
 import apache_beam as beam
 from ddsp import spectral_ops
+from ddsp import core
 import numpy as np
 import pydub
 import tensorflow.compat.v2 as tf
@@ -86,6 +87,18 @@ def _add_f0_estimate(ex, sample_rate, frame_rate):
   return ex
 
 
+def _add_f0_from_midi(ex, midi_notes):
+  """Add fundamental frequency (f0) estimate."""
+  beam.metrics.Metrics.counter('prepare-tfrecord', 'compute-f0').inc()
+
+  # TODO: hardcoded, but at some point should be read from a file
+  f0_hz_midi = core.midi_to_hz(midi_notes).numpy()
+  ex = dict(ex)
+  ex.update({
+      'f0_hz_midi': f0_hz_midi.astype(np.float32)
+  })
+  return ex
+
 def split_example(
     ex, sample_rate, frame_rate, window_secs, hop_secs):
   """Splits example into windows, padding final window if needed."""
@@ -100,17 +113,23 @@ def split_example(
     for window_end in range(window_size, len(sequence) + 1, hop_size):
       yield sequence[window_end-window_size:window_end]
 
-  for audio, loudness_db, f0_hz, f0_confidence in zip(
+  def get_f0_midi(sequence):
+    for window_end in range(len(sequence)):
+      yield [sequence[window_end]]
+
+  for audio, loudness_db, f0_hz, f0_confidence, f0_hz_midi in zip(
       get_windows(ex['audio'], sample_rate),
       get_windows(ex['loudness_db'], frame_rate),
       get_windows(ex['f0_hz'], frame_rate),
-      get_windows(ex['f0_confidence'], frame_rate)):
+      get_windows(ex['f0_confidence'], frame_rate),
+      get_f0_midi(ex['f0_hz_midi'])):
     beam.metrics.Metrics.counter('prepare-tfrecord', 'split-example').inc()
     yield {
         'audio': audio,
         'loudness_db': loudness_db,
         'f0_hz': f0_hz,
-        'f0_confidence': f0_confidence
+        'f0_confidence': f0_confidence,
+        'f0_hz_midi': f0_hz_midi
     }
 
 
@@ -133,6 +152,7 @@ def prepare_tfrecord(
     frame_rate=250,
     window_secs=4,
     hop_secs=1,
+    midi_notes=None,
     pipeline_options=''):
   """Prepares a TFRecord for use in training, evaluation, and prediction.
 
@@ -166,6 +186,11 @@ def prepare_tfrecord(
           examples
           | beam.Map(_add_f0_estimate, sample_rate, frame_rate)
           | beam.Map(add_loudness, sample_rate, frame_rate))
+
+    if midi_notes is not None:
+      examples = (
+          examples
+          | beam.Map(_add_f0_from_midi, midi_notes))
 
     if window_secs:
       examples |= beam.FlatMap(

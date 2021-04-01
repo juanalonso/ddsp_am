@@ -237,7 +237,7 @@ class TFRecordProvider(RecordProvider):
 
 
 @gin.register
-class FMRecordProvider(TFRecordProvider):
+class SynthRecordProvider(TFRecordProvider):
   """Class for reading TFRecords and returning a dataset."""
 
   def __init__(self,
@@ -257,6 +257,10 @@ class FMRecordProvider(TFRecordProvider):
         'audio':
             tf.io.FixedLenFeature([self._audio_length], dtype=tf.float32),
         'f0_hz':
+            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+        'f0_confidence':
+            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+        'f0_hz_midi':
             tf.io.FixedLenFeature([self._f0_length], dtype=tf.float32),
         'loudness_db':
             tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
