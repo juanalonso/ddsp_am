@@ -11,14 +11,14 @@ Autoencoder.encoder = None
 
 # Decoder
 Autoencoder.decoder = @decoders.RnnFcDecoder()
-RnnFcDecoder.rnn_channels = 128
+RnnFcDecoder.rnn_channels = 256
 RnnFcDecoder.rnn_type = 'gru'
-RnnFcDecoder.ch = 128
-RnnFcDecoder.layers_per_stack = 1
+RnnFcDecoder.ch = 256
+RnnFcDecoder.layers_per_stack = 3
 RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
 RnnFcDecoder.output_splits = (
                                 ('car_amp', 1),
-                                ('car_freq', 1),
+                                # ('car_freq', 1),
                                 ('mod_amp', 1),
                                 ('mod_freq', 1),
                                 ('noise_magnitudes', 3),
@@ -39,10 +39,10 @@ AmplitudeModulation.name = 'am'
 # Harmonic.scale_fn = @core.exp_sigmoid
 
 # Filtered Noise Synthesizer
-FilteredNoise.name = 'noise'
-FilteredNoise.n_samples = 192000
+# FilteredNoise.name = 'filtered_noise'
+# FilteredNoise.n_samples = 192000
 # FilteredNoise.window_size = 0
-FilteredNoise.initial_bias=-10.0
+# FilteredNoise.initial_bias=-10.0
 # FilteredNoise.scale_fn = @core.exp_sigmoid
 
 # Add
@@ -60,8 +60,8 @@ FilteredNoise.initial_bias=-10.0
 Autoencoder.processor_group = @processors.ProcessorGroup()
 
 ProcessorGroup.dag = [
+  (@synths.AmplitudeModulation(), ['car_amp', 'f0_hz_midi', 'mod_amp', 'mod_freq']),
   (@synths.FilteredNoise(), ['noise_magnitudes']),  
-  (@synths.AmplitudeModulation(), ['car_amp', 'car_freq', 'mod_amp', 'mod_freq']),
-  (@processors.Add(), ['noise/signal', 'am/signal']),
-#   (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
+  (@processors.Add(), ['filtered_noise/signal', 'am/signal']),
+  # (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
 ]
