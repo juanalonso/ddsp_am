@@ -18,3 +18,5 @@ cp dist/ddsp* /Volumes/GoogleDrive/Mi\ unidad/SMC\ 10/DDSP-10/dist
 
 #cd $orig_dir
 #rm -rf $tmp_dir
+ 
+ date
