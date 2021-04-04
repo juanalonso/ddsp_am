@@ -11,9 +11,9 @@ Autoencoder.encoder = None
 
 # Decoder
 Autoencoder.decoder = @decoders.RnnFcDecoder()
-RnnFcDecoder.rnn_channels = 256
+RnnFcDecoder.rnn_channels = 16
 RnnFcDecoder.rnn_type = 'gru'
-RnnFcDecoder.ch = 256
+RnnFcDecoder.ch = 64
 RnnFcDecoder.layers_per_stack = 3
 RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
 RnnFcDecoder.output_splits = (
