@@ -39,11 +39,12 @@ class RnnFcDecoder(nn.OutputSplitsLayer):
     super().__init__(
         input_keys=input_keys, output_splits=output_splits, **kwargs)
     stack = lambda: nn.FcStack(ch, layers_per_stack)
+    stack_out = lambda: nn.FcStack(ch, layers_per_stack, 'relu')
 
     # Layers.
     self.input_stacks = [stack() for k in self.input_keys]
     self.rnn = nn.Rnn(rnn_channels, rnn_type)
-    self.out_stack = stack()
+    self.out_stack = stack_out()
 
   def compute_output(self, *inputs):
     # Initial processing.
