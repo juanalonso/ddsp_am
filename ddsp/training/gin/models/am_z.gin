@@ -1,0 +1,72 @@
+# -*-Python-*-
+
+include 'models/ae.gin'
+
+# Preprocessor - included in ae.gin
+Autoencoder.preprocessor = @preprocessing.F0MIDILoudnessPreprocessor()
+F0MIDILoudnessPreprocessor.time_steps = 1000
+
+# Encoder
+Autoencoder.encoder = @encoders.MfccTimeDistributedRnnEncoder()
+MfccTimeDistributedRnnEncoder.rnn_channels = 16
+MfccTimeDistributedRnnEncoder.rnn_type = 'gru'
+MfccTimeDistributedRnnEncoder.z_dims = 16
+MfccTimeDistributedRnnEncoder.z_time_steps = 125
+
+# Decoder
+Autoencoder.decoder = @decoders.RnnFcDecoder()
+RnnFcDecoder.rnn_channels = 16
+RnnFcDecoder.rnn_type = 'gru'
+RnnFcDecoder.ch = 64
+RnnFcDecoder.layers_per_stack = 3
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled', 'z')
+RnnFcDecoder.output_splits = (
+                                ('car_amp', 1),
+                                # ('car_freq', 1),
+                                ('mod_amp', 1),
+                                ('mod_freq', 1),
+                                ('noise_magnitudes', 3),
+                                # ('harmonic_distribution', 1),
+                             )
+
+# AM Synthesizer
+AmplitudeModulation.n_samples = 192000
+AmplitudeModulation.sample_rate = 48000
+AmplitudeModulation.amp_scale_fn = @core.exp_sigmoid
+AmplitudeModulation.name = 'am'
+
+# Harmonic Synthesizer
+# Harmonic.name = 'harmonic'
+# Harmonic.n_samples = 192000
+# Harmonic.sample_rate = 48000
+# Harmonic.normalize_below_nyquist = True
+# Harmonic.scale_fn = @core.exp_sigmoid
+
+# Filtered Noise Synthesizer
+# FilteredNoise.name = 'filtered_noise'
+# FilteredNoise.n_samples = 192000
+# FilteredNoise.window_size = 0
+# FilteredNoise.initial_bias=-10.0
+# FilteredNoise.scale_fn = @core.exp_sigmoid
+
+# Add
+# processors.Add.name = 'add'
+
+# Losses
+# Autoencoder.losses = [
+#     @losses.SpectralLoss(),
+# ]
+# SpectralLoss.loss_type = 'L1'
+# SpectralLoss.mag_weight = 1.0
+# SpectralLoss.logmag_weight = 1.0
+# SpectralLoss.fft_sizes = (4096, 2048, 1024, 512, 256, 128, 64)
+
+# ProcessorGroup
+Autoencoder.processor_group = @processors.ProcessorGroup()
+
+ProcessorGroup.dag = [
+  (@synths.AmplitudeModulation(), ['car_amp', 'f0_hz_midi', 'mod_amp', 'mod_freq']),
+  (@synths.FilteredNoise(), ['noise_magnitudes']),  
+  (@processors.Add(), ['filtered_noise/signal', 'am/signal']),
+  # (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
+]
