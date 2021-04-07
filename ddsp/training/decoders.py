@@ -60,6 +60,31 @@ class RnnFcDecoder(nn.OutputSplitsLayer):
 
 
 @gin.register
+class OneFrameDecoder(nn.OutputSplitsLayer):
+  """FC stacks for f0"""
+
+  def __init__(self,
+               ch=512,
+               layers_per_stack=3,
+               input_keys=('f0_midi_scaled'),
+               output_splits=(('carr_amp', 1), ('mod_amp', 1), ('mod_freq', 1)),
+               **kwargs):
+    super().__init__(
+        input_keys=input_keys, output_splits=output_splits, **kwargs)
+    stack = lambda: nn.FcStack(ch, layers_per_stack)
+    stack_out = lambda: nn.FcStack(ch, layers_per_stack, 'relu')
+
+    # Layers.
+    self.input_stacks = [stack() for k in self.input_keys]
+    self.out_stack = stack_out()
+
+  def compute_output(self, *inputs):
+    inputs = [stack(x) for stack, x in zip(self.input_stacks, inputs)]
+    x = tf.concat(inputs, axis=-1)
+    return self.out_stack(x)
+
+
+@gin.register
 class MidiDecoder(nn.DictLayer):
   """Decodes MIDI notes (& velocities) to f0 (& loudness)."""
 
