@@ -135,8 +135,6 @@ class F0MIDILoudnessPreprocessor(F0LoudnessPreprocessor):
     ld_scaled = (loudness_db / LD_RANGE) + 1.0
     f0_midi_scaled = hz_to_midi(f0_hz_midi) / F0_RANGE
 
-    # For NN training, scale frequency and loudness to the range [0, 1].
-
     return f0_hz, loudness_db, f0_hz_midi, f0_scaled, ld_scaled, f0_midi_scaled
 
   @staticmethod
@@ -146,3 +144,27 @@ class F0MIDILoudnessPreprocessor(F0LoudnessPreprocessor):
     loudness_db = (ld_scaled - 1.0) * LD_RANGE
     f0_hz_midi = ddsp.core.midi_to_hz(F0_RANGE * f0_midi_scaled)
     return f0_hz, loudness_db, f0_hz_midi
+
+@gin.register
+class F0Scaler(F0LoudnessPreprocessor):
+  """Scales 'f0_hz_midi' features."""
+
+  def __init__(self, **kwargs):
+    super().__init__(time_steps = 1, **kwargs)
+
+  def call(self, f0_hz_midi) -> ['f0_hz_midi', 'f0_midi_scaled']:
+    """Compute power on the fly if it's not in the inputs."""
+
+    # Resample features to the frame_rate.
+    f0_hz_midi = self.resample(f0_hz_midi)
+    # For NN training, scale frequency and loudness to the range [0, 1].
+    # Log-scale f0 features. Loudness from [-1, 0] to [1, 0].
+    f0_midi_scaled = hz_to_midi(f0_hz_midi) / F0_RANGE
+
+    return f0_hz_midi, f0_midi_scaled
+
+  @staticmethod
+  def invert_scaling(f0_midi_scaled):
+    """Puts scaled f0_midi back to hz."""
+    f0_hz_midi = ddsp.core.midi_to_hz(F0_RANGE * f0_midi_scaled)
+    return f0_hz_midi
