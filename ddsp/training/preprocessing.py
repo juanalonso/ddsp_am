@@ -153,7 +153,6 @@ class F0Scaler(F0LoudnessPreprocessor):
     super().__init__(time_steps = 1, **kwargs)
 
   def call(self, f0_hz_midi) -> ['f0_hz_midi', 'f0_midi_scaled']:
-    """Compute power on the fly if it's not in the inputs."""
 
     # Resample features to the frame_rate.
     f0_hz_midi = self.resample(f0_hz_midi)
