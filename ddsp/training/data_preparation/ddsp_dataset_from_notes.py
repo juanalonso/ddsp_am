@@ -37,9 +37,9 @@ FLAGS = flags.FLAGS
 flags.DEFINE_list(
     'input_audio_filepatterns', [],
     'List of filepatterns to glob for input audio files.')
-flags.DEFINE_list(
-    'midi_notes', [],
-    'List of MIDI notes in the audio file')
+flags.DEFINE_string(
+    'midi_notes', None,
+    'First and last midi notes in the audio file')
 flags.DEFINE_string(
     'output_tfrecord_path', None,
     'The prefix path to the output TFRecord. Shard numbers will be added to '
@@ -71,9 +71,12 @@ def run():
   for filepattern in FLAGS.input_audio_filepatterns:
     input_audio_paths.extend(tf.io.gfile.glob(filepattern))
 
-  midi_notes = []
-  for note in FLAGS.midi_notes:
-    midi_notes = midi_notes + [int(note)]
+  midi_notes = None
+  if FLAGS.midi_notes:
+    notes = FLAGS.midi_notes.split(',')
+    note_from = int(notes[0])
+    note_to = int(notes[-1])
+    midi_notes = list(range(note_from, note_to))
 
   # window_secs is equal to hop_secs, as we do not want overlapping windows
   prepare_tfrecord(
