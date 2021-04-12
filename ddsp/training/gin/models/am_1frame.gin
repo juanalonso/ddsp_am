@@ -2,28 +2,22 @@
 
 include 'models/ae.gin'
 
-# Preprocessor - included in ae.gin
-Autoencoder.preprocessor = @preprocessing.F0MIDILoudnessPreprocessor()
-F0MIDILoudnessPreprocessor.time_steps = 1
+# Preprocessor
+Autoencoder.preprocessor = @preprocessing.F0Scaler()
 
 # Encoder
 Autoencoder.encoder = None
 
 # Decoder
-Autoencoder.decoder = @decoders.RnnFcDecoder()
-RnnFcDecoder.rnn_channels = 16
-RnnFcDecoder.rnn_type = 'gru'
-RnnFcDecoder.ch = 64
-RnnFcDecoder.layers_per_stack = 3
-RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
-RnnFcDecoder.output_splits = (
-                                ('car_amp', 1),
-                                # ('car_freq', 1),
-                                ('mod_amp', 1),
-                                ('mod_freq', 1),
-                                ('noise_magnitudes', 3),
-                                # ('harmonic_distribution', 1),
-                             )
+Autoencoder.decoder = @decoders.OneFrameDecoder()
+OneFrameDecoder.ch = 64
+OneFrameDecoder.layers_per_stack = 3
+OneFrameDecoder.input_keys = ['f0_midi_scaled']
+OneFrameDecoder.output_splits = (
+  ('car_amp', 1), 
+  ('mod_amp', 1), 
+  ('mod_freq', 1),
+)
 
 # AM Synthesizer
 AmplitudeModulation.n_samples = 192000
@@ -61,7 +55,7 @@ Autoencoder.processor_group = @processors.ProcessorGroup()
 
 ProcessorGroup.dag = [
   (@synths.AmplitudeModulation(), ['car_amp', 'f0_hz_midi', 'mod_amp', 'mod_freq']),
-  (@synths.FilteredNoise(), ['noise_magnitudes']),  
-  (@processors.Add(), ['filtered_noise/signal', 'am/signal']),
+  # (@synths.FilteredNoise(), ['noise_magnitudes']),  
+  # (@processors.Add(), ['filtered_noise/signal', 'am/signal']),
   # (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
 ]
