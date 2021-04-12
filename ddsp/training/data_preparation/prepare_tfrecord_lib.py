@@ -187,7 +187,7 @@ def prepare_tfrecord(
           | beam.Map(_add_f0_estimate, sample_rate, frame_rate)
           | beam.Map(add_loudness, sample_rate, frame_rate))
 
-    if midi_notes is not None:
+    if midi_notes:
       examples = (
           examples
           | beam.Map(_add_f0_from_midi, midi_notes))
