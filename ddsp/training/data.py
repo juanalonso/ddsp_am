@@ -256,10 +256,10 @@ class SynthRecordProvider(TFRecordProvider):
     return {
         'audio':
             tf.io.FixedLenFeature([self._audio_length], dtype=tf.float32),
-        'f0_hz':
-            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
-        'f0_confidence':
-            tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+        # 'f0_hz':
+        #     tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
+        # 'f0_confidence':
+        #     tf.io.FixedLenFeature([self._feature_length], dtype=tf.float32),
         'f0_hz_midi':
             tf.io.FixedLenFeature([self._f0_length], dtype=tf.float32),
         'loudness_db':
