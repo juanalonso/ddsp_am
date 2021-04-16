@@ -427,6 +427,18 @@ class FrequencyModulation(processors.Processor):
     self.amp_scale_fn = amp_scale_fn
     self.amp_resample_method = amp_resample_method
 
+  def scale_op(self, op, force_index=False):
+
+    amp = self.amp_scale_fn(op[:,:,0])[:,:,tf.newaxis]
+
+    if force_index:
+      idx = tf.ones_like(op[:,:,1])[:,:,tf.newaxis]
+    else:
+      idx = op[:,:,1]
+
+    tail = core.tf_float32(op[:,:,2:])
+    return tf.concat([amp, idx, tail], axis=2)
+
   def get_controls(self, f0,
                    op1, op2, op3, op4,
                    modulators
@@ -442,6 +454,11 @@ class FrequencyModulation(processors.Processor):
     Returns:
       controls: Dictionary of tensors of synthesizer controls.
     """
+    if self.amp_scale_fn is not None:
+      op1 = self.scale_op(op1, force_index=True)
+      op2 = self.scale_op(op2)
+      op3 = self.scale_op(op3)
+      op4 = self.scale_op(op4)
 
     return {'f0': f0,
             'op1': op1, 'op2': op2, 'op3': op3, 'op4': op4,
