@@ -419,6 +419,8 @@ class FrequencyModulation(processors.Processor):
                n_samples=64000,
                sample_rate=16000,
                amp_scale_fn=core.exp_sigmoid,
+               ar_scale=False,
+               index_scale=False,
                amp_resample_method='window',
                name='freqmod'):
     super().__init__(name=name)
@@ -426,6 +428,8 @@ class FrequencyModulation(processors.Processor):
     self.sample_rate = sample_rate
     self.amp_scale_fn = amp_scale_fn
     self.amp_resample_method = amp_resample_method
+    self.ar_scale = ar_scale
+    self.index_scale = index_scale
 
   def scale_op(self, op, force_index=False):
 
@@ -434,9 +438,16 @@ class FrequencyModulation(processors.Processor):
     if force_index:
       idx = tf.ones_like(op[:,:,1])[:,:,tf.newaxis]
     else:
-      idx = op[:,:,1]
+      if self.index_scale:
+        idx = core.exp_sigmoid(op[:,:,1])[:,:,tf.newaxis]
+      else:
+        idx = op[:,:,1][:,:,tf.newaxis]
 
-    tail = core.tf_float32(op[:,:,2:])
+    if self.ar_scale:
+      tail = core.exp_sigmoid(op[:,:,2:])
+    else:
+      tail = core.tf_float32(op[:,:,2:])
+
     return tf.concat([amp, idx, tail], axis=2)
 
   def get_controls(self, f0,
@@ -482,27 +493,27 @@ class FrequencyModulation(processors.Processor):
     # Create sample-wise envelopes.
     f0_env = core.resample(f0, self.n_samples)
 
-    op1_env, op1_adsr = tf.split(op1, [2,-1], axis=2)
+    op1_env, op1_ar = tf.split(op1, [2,-1], axis=2)
     op1_env = core.resample(op1_env, self.n_samples)
-    op1_adsr = core.resampleADSR(op1_adsr, self.n_samples)
+    op1_ar = core.resample_att_rel(op1_ar, self.n_samples)
 
-    op2_env, op2_adsr = tf.split(op2, [2,-1], axis=2)
+    op2_env, op2_ar = tf.split(op2, [2,-1], axis=2)
     op2_env = core.resample(op2_env, self.n_samples)
-    op2_adsr = core.resampleADSR(op2_adsr, self.n_samples)
+    op2_ar = core.resample_att_rel(op2_ar, self.n_samples)
 
-    op3_env, op3_adsr = tf.split(op3, [2,-1], axis=2)
+    op3_env, op3_ar = tf.split(op3, [2,-1], axis=2)
     op3_env = core.resample(op3_env, self.n_samples)
-    op3_adsr = core.resampleADSR(op3_adsr, self.n_samples)
+    op3_ar = core.resample_att_rel(op3_ar, self.n_samples)
 
-    op4_env, op4_adsr = tf.split(op4, [2,-1], axis=2)
+    op4_env, op4_ar = tf.split(op4, [2,-1], axis=2)
     op4_env = core.resample(op4_env, self.n_samples)
-    op4_adsr = core.resampleADSR(op4_adsr, self.n_samples)
+    op4_ar = core.resample_att_rel(op4_ar, self.n_samples)
 
     modulators_env = core.resample(modulators, self.n_samples)
 
     signal = core.modulate_frequency(f0=f0_env,
                                      op1=op1_env, op2=op2_env, op3=op3_env, op4=op4_env,
-                                     op1_adsr=op1_adsr, op2_adsr=op2_adsr, op3_adsr=op3_adsr, op4_adsr=op4_adsr,
+                                     op1_ar=op1_ar, op2_ar=op2_ar, op3_ar=op3_ar, op4_ar=op4_ar,
                                      modulators = modulators_env,
                                      sample_rate=self.sample_rate)
     return signal
