@@ -25,8 +25,6 @@ import numpy as np
 from scipy import fftpack
 import tensorflow.compat.v2 as tf
 
-import sys
-
 Number = TypeVar('Number', int, float, np.ndarray, tf.Tensor)
 
 
@@ -913,7 +911,7 @@ def modulate_amplitude(amps: tf.Tensor,
 @gin.configurable
 def modulate_frequency(f0: tf.Tensor,
                        op1: tf.Tensor, op2: tf.Tensor, op3: tf.Tensor, op4: tf.Tensor,
-                       op1_adsr: tf.Tensor, op2_adsr: tf.Tensor, op3_adsr: tf.Tensor, op4_adsr: tf.Tensor,
+                       op1_ar: tf.Tensor, op2_ar: tf.Tensor, op3_ar: tf.Tensor, op4_ar: tf.Tensor,
                        modulators: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
@@ -939,23 +937,17 @@ def modulate_frequency(f0: tf.Tensor,
       sum_sinusoids=False, else shape is [batch_size, n_samples].
   """
 
-  # print ("mod_amps", mod_amps.shape)
-  # print ("mod_freq", mod_freq.shape)
-  # print ("f0_hz", f0_hz.shape)
-
   f0 = tf_float32(f0)
   op1 = tf_float32(op1)
   op2 = tf_float32(op2)
   op3 = tf_float32(op3)
   op4 = tf_float32(op4)
-  op1_adsr = tf_float32(op1_adsr)
-  op2_adsr = tf_float32(op2_adsr)
-  op3_adsr = tf_float32(op3_adsr)
-  op4_adsr = tf_float32(op4_adsr)
+  op1_ar = tf_float32(op1_ar)
+  op2_ar = tf_float32(op2_ar)
+  op3_ar = tf_float32(op3_ar)
+  op4_ar = tf_float32(op4_ar)
 
   modulators = tf_float32(modulators)
-
-  # n_samp = f0.shape[1]
 
   a1,i1=tf.split(op1,[1,1], axis=2)
   a2,i2=tf.split(op2,[1,1], axis=2)
@@ -963,10 +955,6 @@ def modulate_frequency(f0: tf.Tensor,
   a4,i4=tf.split(op4,[1,1], axis=2)
 
   m21, m31, m32, m41, m42, m43 = tf.split(modulators,[1,1,1,1,1,1], axis=2)
-
-  # mod_amp = remove_above_nyquist(mod_freq,
-  #                                 mod_amp,
-  #                                 sample_rate)
 
   omega4 = f0 * i4 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
   omega3 = f0 * i3 * (2.0 * np.pi) / float(sample_rate)  # rad / sample
@@ -984,50 +972,23 @@ def modulate_frequency(f0: tf.Tensor,
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x4 = tf.sin(phase4) * op4_adsr
-  x3 = tf.sin(phase3 + m43 * x4) * op3_adsr
-  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * op2_adsr
-  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * op1_adsr
+  x4 = tf.sin(phase4) * op4_ar
+  x3 = tf.sin(phase3 + m43 * x4) * op3_ar
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * op2_ar
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * op1_ar
 
   audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
 
-# def get_ADSR(n_samp, amp):
-#   if amp[0,0,0]==0 :
-#     adsr = np.linspace(np.random.random(), np.random.random(), n_samp)
-#   else:
-#     v = 0.7
-#     p = 5000
-#     adsr = np.linspace(0,1,p)
-#     p = 2000
-#     adsr = np.concatenate((adsr, np.linspace(1,v,p)))
-#     p = 35000
-#     adsr = np.concatenate((adsr, np.ones(p)*v))
-#     p = 15000
-#     adsr = np.concatenate((adsr, np.linspace(v,0,p)))
-#     adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
-#   adsr = adsr[np.newaxis, :, np.newaxis]
 
-  # v = np.random.random()
-  # p = np.random.randint(n_samp//5)
-  # adsr = np.linspace(0,1,p)
-  # p = np.random.randint(n_samp//5)
-  # adsr = np.concatenate((adsr, np.linspace(1,v,p)))
-  # p = np.random.randint(2*n_samp//5)
-  # adsr = np.concatenate((adsr, np.ones(p)*v))
-  # p = np.random.randint(n_samp//5)
-  # adsr = np.concatenate((adsr, np.linspace(v,0,p)))
-  # adsr = np.concatenate((adsr, np.zeros(n_samp-adsr.size)))
-  # adsr = adsr[np.newaxis, :, np.newaxis]
-  #return adsr
 
-def resampleADSR(adsr: tf.Tensor, n_samples):
-  batches = adsr.shape[0]
-  frames = adsr.shape[1]
+def resample_att_rel(ar: tf.Tensor, n_samples):
+  batches = ar.shape[0]
+  frames = ar.shape[1]
   env_size = n_samples//frames
-  output = tf.linspace(adsr[:,:,0], adsr[:,:,1], env_size, axis=2)
+  output = tf.linspace(ar[:,:,0], ar[:,:,1], env_size, axis=2)
   output = tf.reshape(output, shape=(batches, n_samples, 1))
   return output
 
