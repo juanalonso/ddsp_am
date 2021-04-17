@@ -19,6 +19,7 @@ import inspect
 import json
 import os
 import time
+import math
 
 from absl import logging
 from ddsp.training import cloud
@@ -169,7 +170,8 @@ def train(data_provider,
           save_dir='/tmp/ddsp',
           restore_dir='/tmp/ddsp',
           early_stop_loss_value=None,
-          report_loss_to_hypertune=False):
+          report_loss_to_hypertune=False,
+          stop_at_nan=False):
   """Main training loop.
 
   Args:
@@ -188,6 +190,7 @@ def train(data_provider,
      value training stops. If None training will run for num_steps steps.
    report_loss_to_hypertune: Report loss values to hypertune package for
      hyperparameter tuning, such as on Google Cloud AI-Platform.
+   stop_at_nan: Early stopping -without saving checkpoint- if total_loss is Nan
   """
   # Get a distributed dataset iterator.
   dataset = data_provider.get_batch(batch_size, shuffle=True, repeats=-1)
@@ -253,6 +256,12 @@ def train(data_provider,
       # Report metrics for hyperparameter tuning if enabled.
       if report_loss_to_hypertune:
         cloud.report_metric_to_hypertune(losses['total_loss'], step.numpy())
+
+      # Stop the training if loss is NaN
+      if (math.isnan(losses['total_loss']) and
+          stop_at_nan):
+        logging.info('Total loss is NaN')
+        break
 
       # Stop the training when the loss reaches given value
       if (early_stop_loss_value is not None and
