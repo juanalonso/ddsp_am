@@ -419,17 +419,17 @@ class FrequencyModulation(processors.Processor):
                n_samples=64000,
                sample_rate=16000,
                amp_scale_fn=core.exp_sigmoid,
-               ar_scale=False,
-               index_scale=False,
                amp_resample_method='window',
+               index_scale=False,
+               ar_scale=False,
                name='freqmod'):
     super().__init__(name=name)
     self.n_samples = n_samples
     self.sample_rate = sample_rate
     self.amp_scale_fn = amp_scale_fn
     self.amp_resample_method = amp_resample_method
-    self.ar_scale = ar_scale
     self.index_scale = index_scale
+    self.ar_scale = ar_scale
 
   def scale_op(self, op, force_index=False):
 
@@ -439,16 +439,18 @@ class FrequencyModulation(processors.Processor):
       idx = tf.ones_like(op[:,:,1])[:,:,tf.newaxis]
     else:
       if self.index_scale:
-        idx = core.exp_sigmoid(op[:,:,1])[:,:,tf.newaxis]
+        idx = core.exp_sigmoid(op[:,:,1], max_value=10.0, threshold=0.25)[:,:,tf.newaxis]
       else:
         idx = op[:,:,1][:,:,tf.newaxis]
 
     if self.ar_scale:
       tail = core.exp_sigmoid(op[:,:,2:])
     else:
-      tail = core.tf_float32(op[:,:,2:])
+      tail = op[:,:,2:]
 
-    return tf.concat([amp, idx, tail], axis=2)
+    return tf.concat([core.tf_float32(amp), 
+                      core.tf_float32(idx), 
+                      core.tf_float32(tail)], axis=2)
 
   def get_controls(self, f0,
                    op1, op2, op3, op4,
@@ -470,6 +472,7 @@ class FrequencyModulation(processors.Processor):
       op2 = self.scale_op(op2)
       op3 = self.scale_op(op3)
       op4 = self.scale_op(op4)
+      modulators = core.exp_sigmoid(modulators, max_value=10.0)
 
     return {'f0': f0,
             'op1': op1, 'op2': op2, 'op3': op3, 'op4': op4,
