@@ -1,0 +1,71 @@
+# -*-Python-*-
+
+include 'models/ae.gin'
+
+# Preprocessor - included in ae.gin
+Autoencoder.preprocessor = @preprocessing.F0MIDILoudnessPreprocessor()
+F0MIDILoudnessPreprocessor.time_steps = 1000
+
+# Encoder
+Autoencoder.encoder = None
+
+
+# Decoder
+Autoencoder.decoder = @decoders.RnnFcDecoder()
+RnnFcDecoder.rnn_channels = 16
+RnnFcDecoder.rnn_type = 'gru'
+RnnFcDecoder.ch = 64
+RnnFcDecoder.layers_per_stack = 3
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
+RnnFcDecoder.output_splits = (('op1', 4),
+                              ('op2', 4),
+                              ('op3', 4),
+                              ('op4', 4),
+                              ('modulators', 6),
+                              ('noise_magnitudes', 3)
+                              )
+
+# FM Synthesizer
+FrequencyModulation.n_samples = 192000
+FrequencyModulation.sample_rate = 48000
+FrequencyModulation.name = 'fm'
+
+
+
+
+
+
+
+
+
+# Filtered Noise Synthesizer
+# FilteredNoise.name = 'filtered_noise'
+# FilteredNoise.n_samples = 192000
+# FilteredNoise.window_size = 0
+# FilteredNoise.initial_bias=-10.0
+# FilteredNoise.scale_fn = @core.exp_sigmoid
+
+# Add
+# processors.Add.name = 'add'
+
+# Losses
+# Autoencoder.losses = [
+#     @losses.SpectralLoss(),
+# ]
+# SpectralLoss.loss_type = 'L1'
+# SpectralLoss.mag_weight = 1.0
+# SpectralLoss.logmag_weight = 1.0
+# SpectralLoss.fft_sizes = (2048, 1024, 512, 256, 128, 64)
+
+# ProcessorGroup
+Autoencoder.processor_group = @processors.ProcessorGroup()
+
+ProcessorGroup.dag = [
+  (@synths.FrequencyModulation(),
+    ['f0_hz_midi', 'op1', 'op2', 'op3', 'op4', 'modulators']),
+  (@synths.FilteredNoise(),
+    ['noise_magnitudes']),
+  (@processors.Add(),
+    ['filtered_noise/signal', 'fm/signal']),
+]
+
