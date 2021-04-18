@@ -1,0 +1,5 @@
+{
+    'audio': shape=(1, DURATION*SAMPLE_RATE),
+    'f0_hz_midi': (1, 1),
+    'loudness_db': (1, DURATION*FRAME_RATE)
+}
