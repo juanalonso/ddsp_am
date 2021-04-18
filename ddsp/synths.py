@@ -422,6 +422,8 @@ class FrequencyModulation(processors.Processor):
                amp_resample_method='window',
                index_scale=False,
                ar_scale=False,
+               ar_threshold=1e-7,
+               mod_threshold=1e-7,
                name='freqmod'):
     super().__init__(name=name)
     self.n_samples = n_samples
@@ -430,27 +432,30 @@ class FrequencyModulation(processors.Processor):
     self.amp_resample_method = amp_resample_method
     self.index_scale = index_scale
     self.ar_scale = ar_scale
+    self.ar_threshold = ar_threshold
+    self.mod_threshold = mod_threshold
 
   def scale_op(self, op, force_index=False):
 
     amp = self.amp_scale_fn(op[:,:,0])[:,:,tf.newaxis]
 
     if force_index:
-      idx = tf.ones_like(op[:,:,1])[:,:,tf.newaxis]
+      idx = tf.ones_like(op[:,:,1])
     else:
       if self.index_scale:
-        idx = core.exp_sigmoid(op[:,:,1], max_value=10.0, threshold=0.25)[:,:,tf.newaxis]
+        idx = core.exp_sigmoid(op[:,:,1], max_value=10.0, threshold=0.25)
       else:
-        idx = op[:,:,1][:,:,tf.newaxis]
+        idx = op[:,:,1]
+    idx=idx[:,:,tf.newaxis]
 
     if self.ar_scale:
-      tail = core.exp_sigmoid(op[:,:,2:])
+      ar = core.exp_sigmoid(op[:,:,2:], threshold=self.ar_threshold)
     else:
-      tail = op[:,:,2:]
+      ar = op[:,:,2:]
 
-    return tf.concat([core.tf_float32(amp), 
-                      core.tf_float32(idx), 
-                      core.tf_float32(tail)], axis=2)
+    return tf.concat([core.tf_float32(amp),
+                      core.tf_float32(idx),
+                      core.tf_float32(ar)], axis=2)
 
   def get_controls(self, f0,
                    op1, op2, op3, op4,
@@ -472,7 +477,7 @@ class FrequencyModulation(processors.Processor):
       op2 = self.scale_op(op2)
       op3 = self.scale_op(op3)
       op4 = self.scale_op(op4)
-      modulators = core.exp_sigmoid(modulators, max_value=10.0)
+      modulators = core.exp_sigmoid(modulators, max_value=10.0, threshold=self.mod_threshold)
 
     return {'f0': f0,
             'op1': op1, 'op2': op2, 'op3': op3, 'op4': op4,
