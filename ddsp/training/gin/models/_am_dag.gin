@@ -1,0 +1,75 @@
+# -*-Python-*-
+
+include 'models/ae.gin'
+
+# Preprocessor - included in ae.gin
+Autoencoder.preprocessor = @preprocessing.F0MIDILoudnessPreprocessor()
+F0MIDILoudnessPreprocessor.time_steps = 1000
+
+# Encoder
+Autoencoder.encoder = None
+
+
+
+
+
+# Decoder
+Autoencoder.decoder = @decoders.RnnFcDecoder()
+RnnFcDecoder.rnn_channels = 16
+RnnFcDecoder.rnn_type = 'gru'
+RnnFcDecoder.ch = 64
+RnnFcDecoder.layers_per_stack = 3
+RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
+RnnFcDecoder.output_splits = (
+                                ('carrier_gain', 1),
+                                ('carrier_harmonic_amps', 1),
+                                ('lfo_gain', 1),
+                                ('lfo_harmonic_amps', 1),
+                                ('lfo_f0_hz', 1),
+                                # ('noise_magnitudes', 3),
+                             )
+
+# Harmonic Synthesizer
+carrier/Harmonic.name = 'carrier'
+carrier/Harmonic.n_samples = 64000
+carrier/Harmonic.sample_rate = 16000
+carrier/Harmonic.normalize_below_nyquist = True
+carrier/Harmonic.scale_fn = @core.exp_sigmoid
+
+lfo/Harmonic.name = 'lfo'
+lfo/Harmonic.n_samples = 64000
+lfo/Harmonic.sample_rate = 16000
+lfo/Harmonic.normalize_below_nyquist = True
+lfo/Harmonic.scale_fn = @core.exp_sigmoid
+
+# Filtered Noise Synthesizer
+# FilteredNoise.name = 'filtered_noise'
+# FilteredNoise.n_samples = 64000
+# FilteredNoise.window_size = 0
+# FilteredNoise.initial_bias=-10.0
+# FilteredNoise.scale_fn = @core.exp_sigmoid
+
+# Add
+# processors.Add.name = 'add'
+
+# Losses
+# Autoencoder.losses = [
+#     @losses.SpectralLoss(),
+# ]
+# SpectralLoss.loss_type = 'L1'
+# SpectralLoss.mag_weight = 1.0
+# SpectralLoss.logmag_weight = 1.0
+# SpectralLoss.fft_sizes = (4096, 2048, 1024, 512, 256, 128, 64)
+
+# ProcessorGroup
+Autoencoder.processor_group = @processors.ProcessorGroup()
+
+ProcessorGroup.dag = [
+  (@carrier/Harmonic(), ['carrier_gain', 'carrier_harmonic_amps', 'f0_hz_midi']),
+  (@lfo/Harmonic(), ['lfo_gain', 'lfo_harmonic_amps', 'lfo_f0_hz']),
+  (mult, ['carrier/signal', 'lfo/signal']),
+  (add, ['carrier/signal', 'mult/signal']),
+  # (@synths.FilteredNoise(), ['noise_magnitudes']),  
+  # (@processors.Add(), ['filtered_noise/signal', 'am/signal']),
+  # (@synths.Harmonic(), ['amps', 'harmonic_distribution', 'f0_hz']),
+]
