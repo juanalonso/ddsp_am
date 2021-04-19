@@ -199,7 +199,7 @@ def main(unused_argv):
                      save_dir=save_dir,
                      restore_dir=restore_dir,
                      early_stop_loss_value=FLAGS.early_stop_loss_value,
-                     report_loss_to_hypertune=FLAGS.hypertune, 
+                     report_loss_to_hypertune=FLAGS.hypertune,
                      stop_at_nan=FLAGS.stop_at_nan)
 
   # Evaluation.
