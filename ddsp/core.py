@@ -911,7 +911,6 @@ def modulate_amplitude(amps: tf.Tensor,
 @gin.configurable
 def modulate_frequency(f0: tf.Tensor,
                        op1: tf.Tensor, op2: tf.Tensor, op3: tf.Tensor, op4: tf.Tensor,
-                       op1_ar: tf.Tensor, op2_ar: tf.Tensor, op3_ar: tf.Tensor, op4_ar: tf.Tensor,
                        modulators: tf.Tensor,
                        sample_rate: int = 16000,
                        use_angular_cumsum: bool = True) -> tf.Tensor:
@@ -942,17 +941,13 @@ def modulate_frequency(f0: tf.Tensor,
   op2 = tf_float32(op2)
   op3 = tf_float32(op3)
   op4 = tf_float32(op4)
-  op1_ar = tf_float32(op1_ar)
-  op2_ar = tf_float32(op2_ar)
-  op3_ar = tf_float32(op3_ar)
-  op4_ar = tf_float32(op4_ar)
 
   modulators = tf_float32(modulators)
 
-  a1,i1=tf.split(op1,[1,1], axis=2)
-  a2,i2=tf.split(op2,[1,1], axis=2)
-  a3,i3=tf.split(op3,[1,1], axis=2)
-  a4,i4=tf.split(op4,[1,1], axis=2)
+  a1, i1, e1=tf.split(op1,[1,1,1], axis=2)
+  a2, i2, e2=tf.split(op2,[1,1,1], axis=2)
+  a3, i3, e3=tf.split(op3,[1,1,1], axis=2)
+  a4, i4, e4=tf.split(op4,[1,1,1], axis=2)
 
   m21, m31, m32, m41, m42, m43 = tf.split(modulators,[1,1,1,1,1,1], axis=2)
 
@@ -972,25 +967,23 @@ def modulate_frequency(f0: tf.Tensor,
     phase2 = tf.cumsum(omega2, axis=1)
     phase1 = tf.cumsum(omega1, axis=1)
 
-  x4 = tf.sin(phase4) * op4_ar
-  x3 = tf.sin(phase3 + m43 * x4) * op3_ar
-  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * op2_ar
-  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * op1_ar
+  x4 = tf.sin(phase4) * e4
+  x3 = tf.sin(phase3 + m43 * x4) * e3
+  x2 = tf.sin(phase2 + m42 * x4 + m32 * x3) * e2
+  x1 = tf.sin(phase1 + m41 * x4 + m31 * x3 + m21 * x2) * e1
 
   audio = a4 * x4 + a3 * x3 + a2 * x2 + a1 * x1  # [mb, n_samples, 1]
   audio = tf.reduce_sum(audio, axis=-1)  # [mb, n_samples]
 
   return audio
 
-
-
-def resample_att_rel(ar: tf.Tensor, n_samples):
-  batches = ar.shape[0]
-  frames = ar.shape[1]
-  env_size = n_samples//frames
-  output = tf.linspace(ar[:,:,0], ar[:,:,1], env_size, axis=2)
-  output = tf.reshape(output, shape=(batches, n_samples, 1))
-  return output
+# def resample_att_rel(ar: tf.Tensor, n_samples):
+#   batches = ar.shape[0]
+#   frames = ar.shape[1]
+#   env_size = n_samples//frames
+#   output = tf.linspace(ar[:,:,0], ar[:,:,1], env_size, axis=2)
+#   output = tf.reshape(output, shape=(batches, n_samples, 1))
+#   return output
 
 def get_harmonic_frequencies(frequencies: tf.Tensor,
                              n_harmonics: int) -> tf.Tensor:
