@@ -424,6 +424,7 @@ class FrequencyModulation(processors.Processor):
                ar_scale=False,
                ar_threshold=1e-7,
                mod_threshold=1e-7,
+               add_endpoint: bool = True,
                name='freqmod'):
     super().__init__(name=name)
     self.n_samples = n_samples
@@ -434,6 +435,7 @@ class FrequencyModulation(processors.Processor):
     self.ar_scale = ar_scale
     self.ar_threshold = ar_threshold
     self.mod_threshold = mod_threshold
+    self.add_endpoint = add_endpoint
 
   def scale_op(self, op, force_index=False):
 
@@ -452,6 +454,7 @@ class FrequencyModulation(processors.Processor):
       ar = core.exp_sigmoid(op[:,:,2], threshold=self.ar_threshold)
     else:
       ar = op[:,:,2]
+    ar=ar[:,:,tf.newaxis]
 
     return tf.concat([core.tf_float32(amp),
                       core.tf_float32(idx),
@@ -499,14 +502,14 @@ class FrequencyModulation(processors.Processor):
       signal: A tensor of shape [batch, n_samples].
     """
     # Create sample-wise envelopes.
-    f0_env = core.resample(f0, self.n_samples)
+    f0_env = core.resample(f0, self.n_samples, add_endpoint=self.add_endpoint)
 
-    op1 = core.resample(op1, self.n_samples)
-    op2 = core.resample(op2, self.n_samples)
-    op3 = core.resample(op3, self.n_samples)
-    op4 = core.resample(op4, self.n_samples)
+    op1 = core.resample(op1, self.n_samples, add_endpoint=self.add_endpoint)
+    op2 = core.resample(op2, self.n_samples, add_endpoint=self.add_endpoint)
+    op3 = core.resample(op3, self.n_samples, add_endpoint=self.add_endpoint)
+    op4 = core.resample(op4, self.n_samples, add_endpoint=self.add_endpoint)
 
-    modulators_env = core.resample(modulators, self.n_samples)
+    modulators_env = core.resample(modulators, self.n_samples, add_endpoint=self.add_endpoint)
 
     signal = core.modulate_frequency(f0=f0_env,
                                      op1=op1, op2=op2, op3=op3, op4=op4,
