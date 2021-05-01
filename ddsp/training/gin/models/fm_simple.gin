@@ -17,10 +17,10 @@ RnnFcDecoder.rnn_type = 'gru'
 RnnFcDecoder.ch = 64
 RnnFcDecoder.layers_per_stack = 3
 RnnFcDecoder.input_keys = ('ld_scaled', 'f0_midi_scaled')
-RnnFcDecoder.output_splits = (('op1', 4),
-                              ('op2', 4),
-                              ('op3', 4),
-                              ('op4', 4),
+RnnFcDecoder.output_splits = (('op1', 3),
+                              ('op2', 3),
+                              ('op3', 3),
+                              ('op4', 3),
                               ('modulators', 6),
                               ('noise_magnitudes', 3)
                               )
