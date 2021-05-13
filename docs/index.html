@@ -20,39 +20,71 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
     <style>
-        .lead {
-            font-size: 1.75rem;
-        }
         .display-5 {
-            font-size: 2.5rem;
+            font-size: 2rem;
         }        
         .display-6 {
-            font-size: 2.15rem;
+            font-size: 1.5rem;
         }      
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="row mt-5">
+        <div class="row mt-3">
             <h1 class="display-4">Audio companion for "Differentiable FM synthesis"</h1>
             <p class="lead">
                 Master Thesis, Spring 2021<br/>
-                Supervision by Cumhur Erkut</br>
-                Sound and Music Computing, Aalborg University<br/>
-                Code available at <a href="https://github.com/juanalonso/ddsp_fm">https://github.com/juanalonso/ddsp_fm</a>.
+                Author: Juan Alonso<br/> 
+                Supervisor: Cumhur Erkut</br>
+                <a href="https://www.smc.aau.dk/" target="_blank">Sound and Music Computing, Aalborg University</a><br/>
+                Code available at <a href="https://github.com/juanalonso/ddsp_fm" target="_blank">https://github.com/juanalonso/ddsp_fm</a>.
             </p>
         </div>
+        <div class="row mt-5">
+            <h1 class="display-5"><code>Mult</code> processor</h1>
+        </div>
         <div class="row">
+            <div class="col-4">
+                <h5>Original wave</h5>
+                <p class="mb-0">Sine wave, 440Hz</p>
+                <audio controls>
+                    <source src="audio/carrier_440.mp3" type="audio/mpeg">
+                </audio>                 
+            </div>
+            <div class="col-4">
+                <h5>Ring Modulation</h5>
+                <p class="mb-0">LFO at 5Hz</p>
+                <audio controls>
+                    <source src="audio/mult_ring_5hz.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">LFO at 110Hz</p>
+                <audio controls>
+                    <source src="audio/mult_ring_110hz.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+            <div class="col-4">
+                <h5>Amplitude Modulation</h5>
+                <p class="mb-0">LFO at 5Hz</p>
+                <audio controls>
+                    <source src="audio/mult_am_5hz.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">LFO at 110Hz</p>
+                <audio controls>
+                    <source src="audio/mult_am_110hz.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+        </div>
+        <div class="row mt-5"">
             <h1 class="display-5">AM synthesis</h1>
         </div>
-        <div class="row">
+        <div class="row mt-5"">
             <h1 class="display-5">FM synthesis</h1>
         </div>
-        <div class="row">
+        <div class="row mt-5"">
             <h1 class="display-5">Timbre transfer</h1>
         </div>
-        <div class="row">
+        <div class="row mt-5"">
             <h1 class="display-5">Parametric latent space</h1>
             <h1 class="display-6">Autoencoder</h1>
             <h1 class="display-6">Variational Autoencoder</h1>
