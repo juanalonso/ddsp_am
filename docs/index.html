@@ -25,7 +25,10 @@
         }        
         .display-6 {
             font-size: 1.5rem;
-        }      
+        }   
+        h5 {
+            font-weight: 400;
+        }   
     </style>
 </head>
 
@@ -103,7 +106,7 @@
         <div class="row mt-5"">
             <hr class="mb-4 mt-1">
             <h1 class="display-5">FM synthesis</h1>
-            <h5>Sounds generated with the interactive FM patch generator.</p> 
+            <h5>Sounds generated with the interactive FM patch generator.</h5> 
         </div>
         <div class="row row-cols-3">
             <div class="col mb-4">
@@ -184,6 +187,7 @@
             <hr class="mb-4 mt-1">
             <h1 class="display-5">Timbre transfer</h1>
             <h1 class="display-6">AM</h1>
+            <h5>The differentiable AM synth reconstructs its own sounds.</h5>
         </div>
         <div class="row row-cols-3">
             <div class="col mb-4">
@@ -201,7 +205,24 @@
         </div>
         <div class="row mt-5"">
             <h1 class="display-6">FM</h1>
+            <h5>The differentiable FM synth reconstructs AM sounds.</h5>
         </div>
+        <div class="row row-cols-3">
+            <div class="col mb-4">
+                <p class="mb-0">Original</p>
+                <audio controls>
+                    <source src="audio/fm_timbre_1_orig.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+            <div class="col mb-4">
+                <p class="mb-0">Timbre transfer</p>
+                <audio controls>
+                    <source src="audio/fm_timbre_1_transfer.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+        </div>
+
+
         <div class="row mt-5"">
             <hr class="mb-4 mt-1">
             <h1 class="display-5">Parametric latent space</h1>
