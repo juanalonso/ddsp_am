@@ -34,25 +34,23 @@
 
 <body>
     <div class="container">
+
+        <!-- Header -->
         <div class="row mt-3">
             <h1 class="display-4">Audio companion for 'Differentiable FM synthesis'</h1>
             <p class="lead">
                 Master Thesis, May 2021<br/>
                 Author: Juan Alonso<br/> 
-                Supervisor: Cumhur Erkut</br>
+                Supervisor: Cumhur Erkut<br/>
                 <a href="https://www.smc.aau.dk/" target="_blank">Sound and Music Computing, Aalborg University</a><br/>
                 Code available at <a href="https://github.com/juanalonso/ddsp_fm" target="_blank">https://github.com/juanalonso/ddsp_fm</a>.
             </p>
+            <h1 class="display-5 p-3 mt-4" style="background-color: #fff3cd;">⚠️ Please, lower the volume of your computer.</h1>
         </div>
-        <div class="row mt-4">
-            <div class="col">
-                <h1 class="display-5 p-3 m-0" style="background-color: #fff3cd;">⚠️ Please, lower the volume of your computer.</h1>
-            </div>
-        </div>
+
+        <!-- Mult -->
         <div class="row mt-5">
             <h1 class="display-5"><code>Mult</code> processor</h1>
-        </div>
-        <div class="row">
             <div class="col-4">
                 <h5>Original wave</h5>
                 <p class="mb-0">Sine wave, 440Hz</p>
@@ -83,97 +81,93 @@
                 </audio> 
             </div>
         </div>
+        <hr class="mt-5">
+        
+        <!-- AM -->
         <div class="row mt-5">
-            <hr class="mb-4 mt-1">
             <h1 class="display-5">AM synthesis</h1>
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <div class="col-4">
                 <p class="mb-0">Single control point</p>
                 <audio controls>
                     <source src="audio/am_synth_single_control_point.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4">
                 <p class="mb-0">Multiple control points</p>
                 <audio controls>
                     <source src="audio/am_synth_multiple_control_points.mp3" type="audio/mpeg">
                 </audio> 
             </div>
         </div>
+        <hr class="mt-5">
+
+        <!-- FM -->
         <div class="row mt-5">
-            <hr class="mb-4 mt-1">
             <h1 class="display-5">FM synthesis</h1>
             <h5>Sounds generated with the interactive FM patch generator.</h5> 
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 1. All the ops in series.</p>
                 <audio controls>
                     <source src="audio/fm_inter_01.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 4. Not present in Reface DX.</p>
                 <audio controls>
                     <source src="audio/fm_inter_04.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 5. Three modulators in parallel.</p>
                 <audio controls>
                     <source src="audio/fm_inter_05.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 6. Simple FM x 2.</p>
                 <audio controls>
                     <source src="audio/fm_inter_06.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 8. Not present in Reface DX.</p>
                 <audio controls>
                     <source src="audio/fm_inter_08.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 9. </p>
                 <audio controls>
                     <source src="audio/fm_inter_09.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 10. </p>
                 <audio controls>
                     <source src="audio/fm_inter_10.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 13. One modulator to three carriers.</p>
                 <audio controls>
                     <source src="audio/fm_inter_13.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Algorithm 14. Odd harmonics.</p>
                 <audio controls>
                     <source src="audio/fm_inter_14.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-        </div>
-        <div class="row mt-5">
-            <h5>Recreation of classic patches: E. PIANO 1</h5> 
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <h5 class="mt-5">Recreation of classic patches: E. PIANO 1</h5> 
+            <div class="col-4 mb-4">
                 <p class="mb-0">Dexed<br/>Op5 and op6 disbled, flat envelopes.</p>
                 <audio controls>
                     <source src="audio/yamaha_epiano_dexed.mp3" type="audio/mpeg">
                 </audio> 
                 <img src="img/classic_dexed.png" width="200px" class=""/>
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">DDSP-FM<br/>Algorithm 6. Handpicked parameters.</p>
                 <audio controls>
                     <source src="audio/yamaha_epiano_ddspfm.mp3" type="audio/mpeg">
@@ -181,80 +175,72 @@
                 <img src="img/classic_ddspfm.png" width="200px" class=""/>
             </div>
         </div>
+        <hr class="mt-5">
+
+        <!-- Timbre transfer -->        
         <div class="row mt-5">
-            <hr class="mb-4 mt-1">
             <h1 class="display-5">Timbre transfer</h1>
             <h1 class="display-6">AM</h1>
             <h5>The differentiable AM synth reconstructs its own sounds.</h5>
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Original</p>
                 <audio controls>
                     <source src="audio/am_timbre_original_220_50.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Timbre transfer</p>
                 <audio controls>
                     <source src="audio/am_timbre_transfer_220_50.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-        </div>
-        <div class="row mt-5">
-            <h1 class="display-6">FM</h1>
+            <h1 class="display-6 mt-5">FM</h1>
             <h5>The differentiable FM synth reconstructs AM sounds.</h5>
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Original</p>
                 <audio controls>
                     <source src="audio/fm_timbre_1_orig.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Timbre transfer</p>
                 <audio controls>
                     <source src="audio/fm_timbre_1_transfer.mp3" type="audio/mpeg">
                 </audio> 
             </div>
-        </div>
-        <div class="row mt-5">
-            <h1 class="display-6">FM</h1>
+            <h1 class="display-6 mt-5">FM</h1>
             <h5>The differentiable FM synth reconstructs violin sounds.</h5>
-        </div>
-        <div class="row row-cols-3">
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Original</p>
                 <audio controls>
                     <source src="audio/fm_timbre_2_orig.mp3" type="audio/mpeg">
                 </audio> 
                 <img src="img/timbre_fm_2_spec_orig.png" width="200px" class=""/>
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Timbre transfer</p>
                 <audio controls>
                     <source src="audio/fm_timbre_2_transfer.mp3" type="audio/mpeg">
                 </audio> 
                 <img src="img/timbre_fm_2_spec_transfer.png" width="200px" class=""/>
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Operator 1</p>
                 <audio controls>
                     <source src="audio/fm_2_op1.mp3" type="audio/mpeg">
                 </audio> 
                 <img src="img/timbre_fm_2_op1.png" width="200px" class=""/>
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Operator 2</p>
                 <audio controls>
                     <source src="audio/fm_2_op2.mp3" type="audio/mpeg">
                 </audio> 
                 <img src="img/timbre_fm_2_op2.png" width="200px" class=""/>
             </div>
-            <div class="col mb-4">
+            <div class="col-4 mb-4">
                 <p class="mb-0">Operator 3</p>
                 <audio controls>
                     <source src="audio/fm_2_op3.mp3" type="audio/mpeg">
@@ -262,40 +248,92 @@
                 <img src="img/timbre_fm_2_op3.png" width="200px" class=""/>
             </div>
         </div>
+        <hr class="mt-5">
+
+        <!-- Latent space --> 
         <div class="row mt-5">
-            <hr class="mb-4 mt-1">
             <h1 class="display-5">Parametric latent space</h1>
             <h1 class="display-6">Autoencoder</h1>
-        </div>
-        <div class="row">
-            <div class="col-4">
-            </div>
-            <div class="col-8">
+            <div class="col-6">
                 <img src="img/anim_ae.gif" class="img-fluid"/>       
             </div>
-
-        </div>
-        <div class="row mt-5">
-            <h1 class="display-6">Variational Autoencoder</h1>
-        </div>
-        <div class="row">
-            <div class="col-4">             
+            <div class="col-6">
             </div>
-            <div class="col-8">
-                <img src="img/anim_vae10_1.gif" class="img-fluid"/>       
+            <div class="col-4">
+                <h5 class="mt-5">Path through a populated area</h5>
+                <img src="img/ae_inside_path.png" class="img-fluid"/>
+                <img src="img/ae_inside_controls.png" class="img-fluid"/>
+                <img src="img/ae_inside_spec.png" class="img-fluid"/>
+                <audio controls>
+                    <source src="audio/ae_inside.mp3" type="audio/mpeg">
+                </audio>
             </div>
             <div class="col-4">
             </div>
-            <div class="col-8">
+            <div class="col-4">
+                <h5 class="mt-5">Path through an unpopulated area</h5>
+                <img src="img/ae_outside_path.png" class="img-fluid"/>
+                <img src="img/ae_outside_controls.png" class="img-fluid"/>
+                <img src="img/ae_outside_spec.png" class="img-fluid"/>
+                <audio controls>
+                    <source src="audio/ae_outside.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <h1 class="display-6">Variational Autoencoder &sigma;=1.0</h1>
+            <div class="col-6">
+                <img src="img/anim_vae10_1.gif" class="img-fluid"/>       
+            </div>
+            <div class="col-6">
                 <img src="img/anim_vae10_2.gif" class="img-fluid"/>       
             </div>
             <div class="col-4">
-            </div>
-            <div class="col-8">
+                <h5 class="mt-5">Path through a populated area</h5>
+                <img src="img/vae10_inside_path.png" class="img-fluid"/>
+                <img src="img/vae10_inside_controls.png" class="img-fluid"/>
+                <img src="img/vae10_inside_spec.png" class="img-fluid"/>
+                <audio controls>
+                    <source src="audio/vae10_inside.mp3" type="audio/mpeg">
+                </audio>
+            </div>         
+        </div>
+        <div class="row mt-5">
+            <h1 class="display-6">Variational Autoencoder &sigma;=0.1</h1>
+            <div class="col-6">
                 <img src="img/anim_vae01.gif" class="img-fluid"/>       
+            </div>
+            <div class="col-6">
+            </div>
+            <div class="col-4">
+                <h5 class="mt-5">Path through a populated area</h5>
+                <img src="img/vae01_inside_path.png" class="img-fluid"/>
+                <img src="img/vae01_inside_controls.png" class="img-fluid"/>
+                <img src="img/vae01_inside_spec.png" class="img-fluid"/>
+                <audio controls>
+                    <source src="audio/vae01_inside.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+            <div class="col-4">
+            </div>
+            <div class="col-4">
+                <h5 class="mt-5">Path through an unpopulated area</h5>
+                <img src="img/vae01_outside_path.png" class="img-fluid"/>
+                <img src="img/vae01_outside_controls.png" class="img-fluid"/>
+                <img src="img/vae01_outside_spec.png" class="img-fluid"/>
+                <audio controls>
+                    <source src="audio/vae01_outside.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+            <div class="col-4">
+            </div>
+            <div class="col-4">
             </div>
         </div>
     </div>
+
+
+
 </body>
 
 </html>
