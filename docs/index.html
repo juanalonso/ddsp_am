@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Audio companion for 'Differentiable FM synthesis'</title>
     <link rel="canonical" href="https://" />
     <meta name="description" content="Audio companion for 'Differentiable FM synthesis'"/>
@@ -17,8 +17,8 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@kokuma" />
     <meta name="twitter:image" content="https://img/logo.png" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
     <style>
         .display-5 {
             font-size: 2rem;
@@ -28,14 +28,47 @@
         }   
         h5 {
             font-weight: 400;
-        }   
+        } 
+        body{
+            min-height: 75rem;
+            padding-top: 4.5rem;
+        }  
     </style>
 </head>
 
 <body>
+
+    <!-- <nav class="navbar navbar-expand-md navbar-light fixed-top bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#Back to top">Differentiable FM synthesis</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav">    
+                <a class="nav-link" href="#Mult processor">Mult processor</a>
+                <a class="nav-link" href="#AM synthesis">AM synthesis</a>
+                <a class="nav-link" href="#FM synthesis">FM synthesis</a>
+                <a class="nav-link" href="#Timbre transfer">Timbre transfer</a>
+                <a class="nav-link" href="#Parametric latent space">Parametric latent space</a>
+                <a class="nav-link" href="#Reconstructions">Reconstructions</a>
+            </div>
+          </div>
+        </div>
+      </nav> -->
+  
+      <!-- <main class="container">
+        <div class="bg-light p-5 rounded">
+          <h1>Navbar example</h1>
+          <p class="lead">This example is a quick exercise to illustrate how fixed to top navbar works. As you scroll, it will remain fixed to the top of your browser’s viewport.</p>
+          <a class="btn btn-lg btn-primary" href="/docs/5.0/components/navbar/" role="button">View navbar docs &raquo;</a>
+        </div>
+      </main> -->
+
     <div class="container">
 
         <!-- Header -->
+        <a name="Back to top"></a>
         <div class="row mt-3">
             <h1 class="display-4">Audio companion for 'Differentiable FM synthesis'</h1>
             <p class="lead">
@@ -49,6 +82,8 @@
         </div>
 
         <!-- Mult -->
+        <a name="Mult processor"></a>
+
         <div class="row mt-5">
             <h1 class="display-5"><code>Mult</code> processor</h1>
             <div class="col-4">
@@ -84,6 +119,7 @@
         <hr class="mt-5">
         
         <!-- AM -->
+        <a name="AM synthesis"></a>
         <div class="row mt-5">
             <h1 class="display-5">AM synthesis</h1>
             <div class="col-4">
@@ -102,6 +138,7 @@
         <hr class="mt-5">
 
         <!-- FM -->
+        <a name="FM synthesis"></a>
         <div class="row mt-5">
             <h1 class="display-5">FM synthesis</h1>
             <h5>Sounds generated with the interactive FM patch generator.</h5> 
@@ -177,7 +214,8 @@
         </div>
         <hr class="mt-5">
 
-        <!-- Timbre transfer -->        
+        <!-- Timbre transfer -->  
+        <a name="Timbre transfer"></a>      
         <div class="row mt-5">
             <h1 class="display-5">Timbre transfer</h1>
             <h1 class="display-6">AM</h1>
@@ -251,6 +289,7 @@
         <hr class="mt-5">
 
         <!-- Latent space --> 
+        <a name="Parametric latent space"></a>
         <div class="row mt-5">
             <h1 class="display-5">Parametric latent space</h1>
             <h1 class="display-6">Autoencoder</h1>
@@ -351,6 +390,71 @@
             <div class="col-4">
             </div>
         </div>
+        <hr class="mt-5">
+
+        <!-- Reconstructions --> 
+        <a name="Reconstructions"></a>
+        <div class="row mt-5">
+            <h1 class="display-5">Reconstructions</h1>
+            <h1 class="display-6">Most similar - Algorithm 14</h1>
+            <div class="col-4">
+                <p class="mb-0">Reference</p>
+                <audio controls>
+                    <source src="audio/best_reference_14.mp3" type="audio/mpeg">
+                </audio>                 
+            </div>
+            <div class="col-4">
+                <p class="mb-0">AE</p>
+                <audio controls>
+                    <source src="audio/best_ae_3layers_14.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">AE quantized</p>
+                <audio controls>
+                    <source src="audio/best_ae_3layers_14_rounded.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+            <div class="col-4">
+                <p class="mb-0">VAE</p>
+                <audio controls>
+                    <source src="audio/best_vae_3layers_10_14.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">VAE quantized</p>
+                <audio controls>
+                    <source src="audio/best_vae_3layers_10_14_rounded.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+            <h1 class="display-6 mt-5">Most different - Algorithm 11</h1>
+            <div class="col-4">
+                <p class="mb-0">Reference</p>
+                <audio controls>
+                    <source src="audio/worst_reference_11.mp3" type="audio/mpeg">
+                </audio>                 
+            </div>
+            <div class="col-4">
+                <p class="mb-0">AE</p>
+                <audio controls>
+                    <source src="audio/worst_ae_3layers_11.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">AE quantized</p>
+                <audio controls>
+                    <source src="audio/worst_ae_3layers_11_rounded.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+            <div class="col-4">
+                <p class="mb-0">VAE</p>
+                <audio controls>
+                    <source src="audio/worst_vae_3layers_10_11.mp3" type="audio/mpeg">
+                </audio> 
+                <p class="mb-0 mt-4">VAE quantized</p>
+                <audio controls>
+                    <source src="audio/worst_vae_3layers_10_11_rounded.mp3" type="audio/mpeg">
+                </audio> 
+            </div>
+        </div>
+
+
+
+
     </div>
 
 
